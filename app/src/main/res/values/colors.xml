@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="Hijau_tua">#2b524a</color> <!--fedora, mata dalam, tombol tab-->
+    <color name="Baswara">#83aaa2</color>
+    <color name="logisi">#4b4b4b</color>
+    <color name="logjudul">#3d4241</color>
+    <color name="tabmenu">#60807c
+    </color>
+    <color name="isitab">#677d7a
+    </color>
+
+</resources>
+

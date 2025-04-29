@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Worm" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="ThemeDark.Worm" parent="android:ThemeOverlay.Material.Dark" />
+</resources>
