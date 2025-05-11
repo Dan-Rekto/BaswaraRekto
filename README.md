@@ -6,6 +6,7 @@ List tugas:
 -UI Log pengecekan -> Bisa scroll
 -Navigasi
 -OCR
+-animasi buat ganti ke dahjalan.xml
 -Gradle
 -BACKEND
 
