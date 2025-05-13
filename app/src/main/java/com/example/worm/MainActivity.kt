@@ -25,12 +25,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R. layout. activity_main)
-        val button: Button=findViewById(R.id.Button1)
-        val text: TextView=findViewById(R.id.text1)
-        text.visibility = View.INVISIBLE
-        button.setOnClickListener(){
 
-            }
 
     }
 }

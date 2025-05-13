@@ -20,6 +20,9 @@
             android:layout_height="match_parent" >
 
             <Button
+
+                android:text="."
+                android:textColor="@color/Hijau_tua"
                 android:id="@+id/tab"
                 android:layout_width="39dp"
                 android:layout_height="29dp"
@@ -42,7 +45,7 @@
 
 
         </FrameLayout>
-        <Button
+        <ImageView
             android:id="@+id/bulat"
             android:layout_width="600dp"
             android:layout_height="600dp"
@@ -54,7 +57,7 @@
             />
 
         <TextView
-            android:id="@+id/text1"
+            android:id="@+id/text2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="200dp"
@@ -70,21 +73,22 @@
             app:layout_constraintTop_toBottomOf="@+id/frameLayout" />
 
 
-        <Button
+        <ImageView
             android:id="@+id/Button1"
             android:layout_width="115dp"
             android:layout_height="105dp"
             android:layout_marginBottom="370dp"
             android:background="@drawable/tombol"
+            android:visibility="visible"
             app:layout_constraintBottom_toBottomOf="@id/bulat"
             app:layout_constraintEnd_toEndOf="@id/bulat"
             app:layout_constraintHorizontal_bias="0.51"
             app:layout_constraintStart_toStartOf="@id/bulat"
             app:layout_constraintTop_toTopOf="@id/bulat" />
 
-        />
 
-        <Button
+
+        <ImageView
             android:id="@+id/mataluar"
             android:layout_width="229dp"
             android:layout_height="244dp"
@@ -97,6 +101,8 @@
             app:layout_constraintTop_toTopOf="@id/bulat" />
 
         <Button
+            android:text="."
+            android:textColor="@color/Hijau_tua"
             android:id="@+id/matadalam"
             android:layout_width="60dp"
             android:layout_height="50dp"
@@ -110,13 +116,14 @@
             app:layout_constraintTop_toTopOf="@id/mataluar"
             app:layout_constraintVertical_bias="0.32999998" />
 
-        <Button
+        <ImageView
             android:id="@+id/pupil"
             android:layout_width="17dp"
             android:layout_height="17dp"
             android:layout_marginTop="180dp"
             android:background="@drawable/pupil"
             android:gravity="center_horizontal"
+            android:visibility="visible"
             app:layout_constraintBottom_toBottomOf="@id/matadalam"
             app:layout_constraintEnd_toEndOf="@id/mataluar"
             app:layout_constraintHorizontal_bias="0.63"

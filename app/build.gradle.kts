@@ -53,8 +53,6 @@ dependencies {
     implementation(libs.material)
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
-    implementation("org.tensorflow:tensorflow-lite-support:0.3.1")
-    implementation("com.theokanning.openai-gpt3-java:client:0.12.0")
     implementation("com.squareup.retrofit2:converter-jackson:2.9.0")
     implementation("com.google.ai.client.generativeai:generativeai:0.7.0")
     implementation(libs.androidx.activity)

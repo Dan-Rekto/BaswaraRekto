@@ -19,7 +19,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent" >
 
-            <Button
+            <ImageView
                 android:id="@+id/tab"
                 android:layout_width="39dp"
                 android:layout_height="29dp"
@@ -32,7 +32,7 @@
                 app:layout_constraintTop_toTopOf="@id/judul" />
 
             <TextView
-                android:id="@+id/text1"
+                android:id="@+id/text2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="200dp"
@@ -43,7 +43,7 @@
 
         </FrameLayout>
 
-        <Button
+        <ImageView
             android:id="@+id/bulat"
             android:layout_width="600dp"
             android:layout_height="600dp"
@@ -70,7 +70,7 @@
             app:layout_constraintTop_toBottomOf="@+id/frameLayout" />
 
 
-        <Button
+        <ImageView
             android:id="@+id/Button1"
             android:layout_width="115dp"
             android:layout_height="105dp"
@@ -80,11 +80,9 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.52"
             app:layout_constraintStart_toEndOf="@+id/frameLayout"
-            app:layout_constraintTop_toBottomOf="@id/bulat" />
+            app:layout_constraintTop_toBottomOf="@id/bulat"/>
 
-        />
-
-        <Button
+        <ImageView
             android:id="@+id/mataluar"
             android:layout_width="229dp"
             android:layout_height="244dp"
@@ -97,7 +95,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/bulat" />
 
-        <Button
+        <ImageView
             android:id="@+id/topi"
             android:layout_width="229dp"
             android:layout_height="244dp"
@@ -111,7 +109,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/bulat" />
 
-        <Button
+        <ImageView
             android:id="@+id/matadalam"
             android:layout_width="60dp"
             android:layout_height="50dp"
@@ -125,7 +123,7 @@
             app:layout_constraintTop_toTopOf="@id/mataluar"
             app:layout_constraintVertical_bias="0.32999998" />
 
-        <Button
+        <ImageView
             android:id="@+id/pupil"
             android:layout_width="17dp"
             android:layout_height="17dp"
