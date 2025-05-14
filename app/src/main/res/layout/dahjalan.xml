@@ -19,17 +19,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent" >
 
-            <ImageView
-                android:id="@+id/tab"
-                android:layout_width="39dp"
-                android:layout_height="29dp"
-                android:layout_marginTop="5dp"
-                android:alpha="1"
-                android:background="@drawable/tab"
-                android:gravity="center_horizontal"
-                android:rotationX="0"
-                app:layout_constraintStart_toStartOf="@id/judul"
-                app:layout_constraintTop_toTopOf="@id/judul" />
+
 
             <TextView
                 android:id="@+id/text2"
@@ -39,6 +29,17 @@
                 android:layout_marginTop="900dp"
                 android:text="Halo!"
                 android:textStyle="bold|italic" />
+
+            <Button
+                android:text="."
+                android:id="@+id/tab"
+                android:layout_width="39dp"
+                android:layout_height="29dp"
+                android:layout_marginTop="5dp"
+                android:alpha="1"
+                android:background="@drawable/tab"
+                android:gravity="center_horizontal"
+                android:rotationX="0" />
 
 
         </FrameLayout>
@@ -78,9 +79,9 @@
             android:layout_marginEnd="370dp"
             android:background="@drawable/tombol"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.52"
+            app:layout_constraintHorizontal_bias="0.54"
             app:layout_constraintStart_toEndOf="@+id/frameLayout"
-            app:layout_constraintTop_toBottomOf="@id/bulat"/>
+            app:layout_constraintTop_toBottomOf="@id/bulat" />
 
         <ImageView
             android:id="@+id/mataluar"
@@ -92,6 +93,7 @@
             android:gravity="center_horizontal"
             android:visibility="invisible"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.44"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/bulat" />
 
@@ -105,7 +107,7 @@
             android:gravity="center_horizontal"
             android:visibility="visible"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.55"
+            app:layout_constraintHorizontal_bias="0.52"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/bulat" />
 
@@ -127,12 +129,47 @@
             android:id="@+id/pupil"
             android:layout_width="17dp"
             android:layout_height="17dp"
-            android:layout_marginStart="244dp"
+            android:layout_marginStart="238dp"
             android:layout_marginTop="-5dp"
             android:background="@drawable/pupil"
             android:gravity="center_horizontal"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="@id/matadalam" />
+
+        <ImageView
+            android:id="@+id/Layberenti"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="146dp"
+            android:layout_marginTop="360dp"
+            android:background="@drawable/silangberenti"
+
+            android:foregroundGravity="center"
+            app:layout_constraintBottom_toTopOf="@+id/frameLayout"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@id/judul" />
+
+        <Button
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_marginStart="157dp"
+            android:layout_marginTop="9dp"
+            android:background="@drawable/baseline_highlight_off_24"
+            android:text="."
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@id/Layberenti" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:fontFamily="@font/mont"
+            android:text="Stop Notifikasi"
+            android:textSize="20dp"
+
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/Layberenti" />
 
         <TextView
             android:id="@+id/judul"
@@ -149,9 +186,6 @@
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toEndOf="@+id/frameLayout"
             app:layout_constraintTop_toBottomOf="@+id/frameLayout" />
-
-
-
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>
