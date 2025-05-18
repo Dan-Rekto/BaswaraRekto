@@ -1,23 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    tools:showIn = "navigation_view">
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
-        <ImageView
-            android:id="@+id/nav_home"
-            android:icon="@drawable/home"
-            android:title="Home"/>
-
-        <ImageView
-            android:id="@+id/nav_logpengecekan"
-            android:icon=""
-            android:title="Settings"/>
-
-        <ImageView
-            android:id="@+id/nav_info"
-            android:icon=""
-            android:title="Share"/>
-
-
-</menu>
+</androidx.constraintlayout.widget.ConstraintLayout>
