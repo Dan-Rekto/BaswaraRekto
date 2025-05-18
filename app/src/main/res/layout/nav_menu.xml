@@ -1,32 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android"
+<menu
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:showIn="navigation_view">
+    tools:showIn = "navigation_view">
 
-        <group android:checkableBehavior="single">
-                <item
-                    android:id="@+id/nav_home"
-                    android:icon="@drawable/ic_home" android:title="Beranda" />
-                <item
-                    android:id="@+id/nav_gallery"
-                    android:icon="@drawable/ic_gallery" android:title="Galeri" />
-                <item
-                    android:id="@+id/nav_slideshow"
-                    android:icon="@drawable/ic_slideshow" android:title="Slideshow" />
-        </group>
+        <ImageView
+            android:id="@+id/nav_home"
+            android:icon="@drawable/home"
+            android:title="Home"/>
 
-        <item android:title="Lainnya">
-                <menu>
-                        <item
-                            android:id="@+id/nav_tools"
-                            android:icon="@drawable/ic_tools" android:title="Alat" />
-                        <item
-                            android:id="@+id/nav_share"
-                            android:icon="@drawable/ic_share" android:title="Bagikan" />
-                        <item
-                            android:id="@+id/nav_send"
-                            android:icon="@drawable/ic_send" android:title="Kirim" />
-                </menu>
-        </item>
+        <ImageView
+            android:id="@+id/nav_logpengecekan"
+            android:icon=""
+            android:title="Settings"/>
+
+        <ImageView
+            android:id="@+id/nav_info"
+            android:icon=""
+            android:title="Share"/>
+
 
 </menu>

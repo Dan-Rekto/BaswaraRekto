@@ -41,7 +41,8 @@
                 android:layout_marginStart="200dp"
                 android:layout_marginTop="900dp"
                 android:text="Halo!"
-                android:textStyle="bold|italic" />
+                android:textStyle="bold|italic"
+                android:visibility="visible" />
 
 
         </FrameLayout>
