@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="framedrawer" type="id"></item>
+    <item name="drawerdrawer" type="id"></item>
+    <item name="toolbardrawer" type="id"></item>
+    <item name="navdrawer" type="id"></item>
+</resources>
