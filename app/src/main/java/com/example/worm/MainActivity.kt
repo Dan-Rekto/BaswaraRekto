@@ -13,7 +13,7 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toolbar
+import androidx.appcompat.widget.Toolbar
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import com.example.worm.ui.theme.SecondActivity
@@ -39,13 +40,7 @@ class MainActivity : ComponentActivity() {
         val AI: String = "AIzaSyC8wJ_8GNj33Xp-pGC6vD6S0JlYB5eg07Y"
 
         val ctx = this
-        val button = findViewById<Button>(R.id.matadalam)
-        var laman:Boolean = true
-        button.setOnClickListener {
-            val intent = Intent(this, SecondActivity::class.java)
-            var laman:Boolean = true
-            startActivity(intent)
-        }
+
 
         // 1. Root DrawerLayout
         val drawer = DrawerLayout(this).apply {
@@ -64,30 +59,23 @@ class MainActivity : ComponentActivity() {
                 DrawerLayout.LayoutParams.MATCH_PARENT
             )
         }
-
+        val rootView = layoutInflater.inflate(R.layout.activity_main, content, false)
         // 3. Toolbar beserta tombol menu
         val toolbar = Toolbar(this).apply {
             id = R.id.toolbardrawer
             setBackgroundColor(Color.parseColor("#2F5C54"))
             setTitleTextColor(Color.WHITE)
-            title = "Aplikasi"
-            // tombol hamburger
-            val btnMenu = ImageView(context).apply {
-                setImageResource(android.R.drawable.ic_menu_sort_by_size)
-                setColorFilter(Color.WHITE)
-                setPadding(32, 32, 32, 32)
-                setOnClickListener {
-                    drawer.openDrawer(Gravity.START)
-                }
-            }
-            addView(btnMenu, Toolbar.LayoutParams(
-                Toolbar.LayoutParams.WRAP_CONTENT,
-                Toolbar.LayoutParams.WRAP_CONTENT,
-                Gravity.START
-            ))
-        }
-        content.addView(toolbar)
 
+            // tombol hamburger
+// pakai icon bawaan dan tint yang benar
+            navigationIcon = ContextCompat.getDrawable(context, android.R.drawable.ic_menu_sort_by_size)
+            navigationIcon?.setTint(ContextCompat.getColor(context, R.color.tabmenu))
+            setNavigationOnClickListener { drawer.openDrawer(Gravity.START) }
+
+        }
+
+        content.addView(toolbar)
+        content.addView(rootView)
         // 4. NavigationView
         val navView = NavigationView(this).apply {
             id = R.id.navdrawer
@@ -117,7 +105,7 @@ class MainActivity : ComponentActivity() {
             menu.add(Menu.NONE, 2, Menu.NONE, "Tentang Kami")
                 .icon = getDrawable(android.R.drawable.ic_menu_info_details)
             menu.add(Menu.NONE, 3, Menu.NONE, "Home")
-                .icon = getDrawable(android.R.drawable.ic_menu_search)
+                .icon = getDrawable(android.R.drawable.ic_media_next)
 
             setNavigationItemSelectedListener { menuItem ->
                 when (menuItem.itemId) {
@@ -138,6 +126,15 @@ class MainActivity : ComponentActivity() {
 
         // 6. Tampilkan
         setContentView(drawer)
+
+        val button = findViewById<Button>(R.id.matadalam)
+        var laman:Boolean = true
+        button.setOnClickListener {
+            val intent = Intent(this, SecondActivity::class.java)
+            var laman:Boolean = true
+            startActivity(intent)
+        }
+
     }
 }
 

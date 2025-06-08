@@ -27,7 +27,7 @@
                 android:layout_width="39dp"
                 android:layout_height="29dp"
                 android:layout_marginTop="5dp"
-                android:alpha="1"
+                android:alpha="0"
                 android:background="@drawable/tab"
                 android:gravity="center_horizontal"
                 android:rotationX="0"
