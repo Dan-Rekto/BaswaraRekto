@@ -1,46 +1,62 @@
 package com.example.worm
 
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
+import android.util.TypedValue
 import android.view.Gravity
 import android.view.Menu
-import android.view.MenuItem
 import android.view.View
 import android.widget.Button
 import android.widget.FrameLayout
-import android.widget.ImageButton
-import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.appcompat.widget.Toolbar
-import androidx.activity.ComponentActivity
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.appcompat.widget.Toolbar
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.ui.res.colorResource
 import androidx.core.content.ContextCompat
-import androidx.core.view.ViewCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.fragment.app.Fragment
 import com.example.worm.ui.theme.SecondActivity
 import com.example.worm.ui.theme.WormTheme
 import com.google.android.material.navigation.NavigationView
 
-class MainActivity : ComponentActivity() {
+var sw:Boolean = true
+class HomeFragment : Fragment(R.layout.activity_main_uji) {
+    override fun onViewCreated(v: View, b: Bundle?) {
+        super.onViewCreated(v, b)
+        v.findViewById<Button>(R.id.matadalam).setOnClickListener {
+            sw = false
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.container_fragment, DahJalan())
+                .commit()
+        }
+    }
+    class DahJalan : Fragment(R.layout.dahjalan) {
+        override fun onViewCreated(v: View, b: Bundle?) {
+            super.onViewCreated(v, b)
+            v.findViewById<Button>(R.id.silang).setOnClickListener {
+                sw = true
+                parentFragmentManager.beginTransaction()
+                    .replace(R.id.container_fragment, HomeFragment())
+                    .commit()
+            }
+        }
+    }
+}
+
+class MainActivity : AppCompatActivity() {
+    private val PREFS_NAME = "app_prefs"
+    private val KEY_SW    = "sw"
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContentView(R.layout.activity_main)
-        //API kita
         val newsid: String = "a895c9b8cc274495a67cdaec6922fe8c"
         val gnews: String = "bd93c4e2fcfe19b6239972ea95dd0512"
         val news: String = "13b9c989205c4629861ae9d6e3ceb728"
         val AI: String = "AIzaSyC8wJ_8GNj33Xp-pGC6vD6S0JlYB5eg07Y"
-
-        val ctx = this
-
 
         // 1. Root DrawerLayout
         val drawer = DrawerLayout(this).apply {
@@ -51,7 +67,7 @@ class MainActivity : ComponentActivity() {
             )
         }
 
-        // 2. Konten utama
+        // 2. Content container
         val content = FrameLayout(this).apply {
             id = R.id.framedrawer
             layoutParams = DrawerLayout.LayoutParams(
@@ -59,34 +75,55 @@ class MainActivity : ComponentActivity() {
                 DrawerLayout.LayoutParams.MATCH_PARENT
             )
         }
-        val rootView = layoutInflater.inflate(R.layout.activity_main, content, false)
-        // 3. Toolbar beserta tombol menu
+
+        // 3. Fragment container (ADD THIS BEFORE TOOLBAR)
+        val fragmentContainer = FrameLayout(this).apply {
+            id = R.id.container_fragment
+            layoutParams = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+            )
+        }
+        content.addView(fragmentContainer)
+
+        // 4. Toolbar setup (keeping your existing code)
         val toolbar = Toolbar(this).apply {
             id = R.id.toolbardrawer
-            setBackgroundColor(Color.parseColor("#2F5C54"))
-            setTitleTextColor(Color.WHITE)
+            setBackgroundColor(Color.parseColor("#2b5f56"))
+            setTitleTextColor(Color.parseColor("#2b5f56"))
 
-            // tombol hamburger
-// pakai icon bawaan dan tint yang benar
-            navigationIcon = ContextCompat.getDrawable(context, android.R.drawable.ic_menu_sort_by_size)
+            navigationIcon = ContextCompat.getDrawable(
+                context, android.R.drawable.ic_menu_sort_by_size
+            )
             navigationIcon?.setTint(ContextCompat.getColor(context, R.color.tabmenu))
             setNavigationOnClickListener { drawer.openDrawer(Gravity.START) }
 
-        }
+            val tv = TypedValue()
+            context.theme.resolveAttribute(
+                androidx.appcompat.R.attr.actionBarSize, tv, true
+            )
+            val actionBarHeightPx = TypedValue.complexToDimensionPixelSize(
+                tv.data, resources.displayMetrics
+            )
 
+            layoutParams = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                actionBarHeightPx,
+                Gravity.TOP
+            )
+        }
+        setSupportActionBar(toolbar)
         content.addView(toolbar)
-        content.addView(rootView)
-        // 4. NavigationView
+
+        // 5. Navigation drawer (keeping your existing code)
         val navView = NavigationView(this).apply {
             id = R.id.navdrawer
             val width = (resources.displayMetrics.widthPixels * 0.75).toInt()
-            layoutParams = DrawerLayout.LayoutParams(width,
-                DrawerLayout.LayoutParams.MATCH_PARENT,
-                Gravity.START
+            layoutParams = DrawerLayout.LayoutParams(
+                width, DrawerLayout.LayoutParams.MATCH_PARENT, Gravity.START
             )
             setBackgroundColor(Color.parseColor("#5E7D76"))
 
-            // header
             val header = LinearLayout(context).apply {
                 orientation = LinearLayout.VERTICAL
                 setPadding(48, 80, 48, 32)
@@ -99,7 +136,6 @@ class MainActivity : ComponentActivity() {
             }
             addHeaderView(header)
 
-            // menu item
             menu.add(Menu.NONE, 1, Menu.NONE, "Log Pengecekan")
                 .icon = getDrawable(android.R.drawable.ic_menu_search)
             menu.add(Menu.NONE, 2, Menu.NONE, "Tentang Kami")
@@ -109,47 +145,103 @@ class MainActivity : ComponentActivity() {
 
             setNavigationItemSelectedListener { menuItem ->
                 when (menuItem.itemId) {
-                    3 -> {
-                            startActivity(Intent(ctx, MainActivity::class.java))
-                        }
-                    1 -> { /* Mengenai Log Pengecekan */ }
-                    2 -> { /* Mengenai Tentang Kami */ }
+                    3 -> if (sw){
+                        supportFragmentManager.beginTransaction()
+                            .replace(R.id.container_fragment, HomeFragment())
+                            .commit()
+                    }else{
+                        supportFragmentManager.beginTransaction()
+                            .replace(R.id.container_fragment, HomeFragment.DahJalan())
+                            .commit()
+                    }
+                    1 -> supportFragmentManager.beginTransaction()
+                        .replace(R.id.container_fragment, LogFragment())
+                        .addToBackStack(null)
+                        .commit()
+                    2 -> supportFragmentManager.beginTransaction()
+                        .replace(R.id.container_fragment, AboutFragment())
+                        .addToBackStack(null)
+                        .commit()
                 }
                 drawer.closeDrawer(Gravity.START)
                 true
             }
         }
 
-        // 5. Rangkap ke DrawerLayout
+        // 6. Add views to drawer
         drawer.addView(content)
         drawer.addView(navView)
-
-        // 6. Tampilkan
+        val swSaved = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+            .getBoolean(KEY_SW, true)
+        sw = swSaved
+        // 7. Set content view ONCE
         setContentView(drawer)
 
-        val button = findViewById<Button>(R.id.matadalam)
-        var laman:Boolean = true
-        button.setOnClickListener {
-            val intent = Intent(this, SecondActivity::class.java)
-            var laman:Boolean = true
-            startActivity(intent)
+        // 8. Initial fragment
+        if (savedInstanceState == null) {
+            if (sw) {
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.container_fragment, HomeFragment())
+                    .commit()
+            } else {
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.container_fragment, HomeFragment.DahJalan())
+                    .commit()
+            }
         }
+    }
+    override fun onBackPressed() {
+        val current = supportFragmentManager.findFragmentById(R.id.container_fragment)
 
+        when (current) {
+            is LogFragment, is AboutFragment -> {
+                if (sw){
+                    // Jika sedang di log/about, kembali ke home
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.container_fragment, HomeFragment())
+                        .commit()
+                }else{
+                    // Jika sedang di log/about, kembali ke home
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.container_fragment, HomeFragment.DahJalan())
+                        .commit()
+                }
+
+            }
+            is HomeFragment.DahJalan -> {
+                // Di DahJalan → simpan sw = false, lalu keluar
+                getSharedPreferences("app_prefs", MODE_PRIVATE).edit()
+                    .putBoolean("sw", false)
+                    .apply()
+                finish() // langsung keluar app
+            }
+            is HomeFragment -> {
+                // Di Home → simpan sw = true, lalu keluar
+                getSharedPreferences("app_prefs", MODE_PRIVATE).edit()
+                    .putBoolean("sw", true)
+                    .apply()
+                finish()
+            }
+            else -> {
+                // Default, fallback ke super
+                super.onBackPressed()
+            }
+        }
+    }
+
+}
+
+
+
+
+class AboutFragment : Fragment(R.layout.aboutab) {
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
     }
 }
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-@Preview(showBackground = true)
-@Composable
-
-fun GreetingPreview() {
-    WormTheme {
-        Greeting("Sinister")
+class LogFragment : Fragment(R.layout.log) {
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
     }
 }

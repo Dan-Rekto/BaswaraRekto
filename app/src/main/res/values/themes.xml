@@ -1,6 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Light theme tanpa ActionBar -->
     <style name="Theme.Worm" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <!-- Primary / toolbar, fab, ripple, dll -->
+        <item name="colorPrimary">@color/Hijau_tua</item>
+        <item name="colorOnPrimary">@android:color/white</item>
+        <!-- Secondary jika butuh elemen accent tambahan -->
+        <item name="colorSecondary">@color/Hijau_tua</item>
+        <item name="colorOnSecondary">@android:color/white</item>
+        <!-- Default fill untuk MaterialButton -->
+        <item name="colorButtonNormal">@color/Hijau_tua</item>
+        <!-- Background & teks umum -->
+        <item name="android:colorBackground">@android:color/white</item>
+        <item name="android:textColorPrimary">@android:color/black</item>
     </style>
-    <style name="ThemeDark.Worm" parent="android:ThemeOverlay.Material.Dark" />
+
+    <!-- Dark theme tanpa ActionBar -->
+    <style name="ThemeDark.Worm" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/Hijau_tua</item>
+        <item name="colorOnPrimary">@android:color/white</item>
+        <item name="colorSecondary">@color/Hijau_tua</item>
+        <item name="colorOnSecondary">@android:color/white</item>
+        <item name="colorButtonNormal">@color/Hijau_tua</item>
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="android:textColorPrimary">@android:color/white</item>
+    </style>
 </resources>

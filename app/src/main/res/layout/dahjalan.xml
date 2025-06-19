@@ -41,17 +41,6 @@
                 android:text="Halo!"
                 android:textStyle="bold|italic" />
 
-            <Button
-                android:text="."
-                android:id="@+id/tab"
-                android:layout_width="39dp"
-                android:layout_height="29dp"
-                android:layout_marginTop="5dp"
-                android:alpha="1"
-                android:background="@drawable/tab"
-                android:gravity="center_horizontal"
-                android:rotationX="0" />
-
 
         </FrameLayout>
 
@@ -155,6 +144,7 @@
             android:layout_marginTop="360dp"
             android:background="@drawable/silangberenti"
             android:foregroundGravity="center"
+            android:visibility="visible"
             app:layout_constraintBottom_toTopOf="@+id/frameLayout"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.52"
@@ -165,11 +155,9 @@
             android:id="@+id/silang"
             android:layout_width="100dp"
             android:layout_height="100dp"
-            android:layout_marginStart="162dp"
             android:layout_marginTop="9dp"
             android:background="@drawable/baseline_highlight_off_24"
-            android:text="."
-            app:layout_constraintStart_toStartOf="parent"
+
             app:layout_constraintTop_toTopOf="@id/Layberenti" />
 
         <TextView
@@ -180,6 +168,7 @@
             android:fontFamily="@font/mont"
             android:text="Stop Notifikasi"
             android:textSize="20dp"
+            android:textColor="@color/white"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.52"
             app:layout_constraintStart_toStartOf="parent"
