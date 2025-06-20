@@ -8,6 +8,9 @@ import android.util.TypedValue
 import android.view.Gravity
 import android.view.Menu
 import android.view.View
+import android.os.Handler
+import android.os.Looper
+import android.widget.Toast
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.LinearLayout
@@ -50,13 +53,24 @@ class HomeFragment : Fragment(R.layout.activity_main_uji) {
 class MainActivity : AppCompatActivity() {
     private val PREFS_NAME = "app_prefs"
     private val KEY_SW    = "sw"
+    private var doubleBackToExitPressedOnce = false
+    private var doubleBackToExitPressedOnce1 = false  // For DahJalan
+    private val handler = Handler(Looper.getMainLooper())
+    private val resetBackPress = Runnable { doubleBackToExitPressedOnce = false }
+    private val resetBackPress1 = Runnable { doubleBackToExitPressedOnce1 = false }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit().clear().apply()
+        sw = true
         enableEdgeToEdge()
         val newsid: String = "a895c9b8cc274495a67cdaec6922fe8c"
         val gnews: String = "bd93c4e2fcfe19b6239972ea95dd0512"
         val news: String = "13b9c989205c4629861ae9d6e3ceb728"
         val AI: String = "AIzaSyC8wJ_8GNj33Xp-pGC6vD6S0JlYB5eg07Y"
+
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.container_fragment, HomeFragment())
+            .commit()
 
         // 1. Root DrawerLayout
         val drawer = DrawerLayout(this).apply {
@@ -89,8 +103,10 @@ class MainActivity : AppCompatActivity() {
         // 4. Toolbar setup (keeping your existing code)
         val toolbar = Toolbar(this).apply {
             id = R.id.toolbardrawer
-            setBackgroundColor(Color.parseColor("#2b5f56"))
-            setTitleTextColor(Color.parseColor("#2b5f56"))
+                setBackgroundColor(Color.TRANSPARENT)
+                setTitleTextColor(Color.parseColor("#2b5f56"))
+
+
 
             navigationIcon = ContextCompat.getDrawable(
                 context, android.R.drawable.ic_menu_sort_by_size
@@ -112,6 +128,7 @@ class MainActivity : AppCompatActivity() {
                 Gravity.TOP
             )
         }
+
         setSupportActionBar(toolbar)
         content.addView(toolbar)
 
@@ -195,38 +212,55 @@ class MainActivity : AppCompatActivity() {
 
         when (current) {
             is LogFragment, is AboutFragment -> {
-                if (sw){
-                    // Jika sedang di log/about, kembali ke home
+                if (sw) {
                     supportFragmentManager.beginTransaction()
                         .replace(R.id.container_fragment, HomeFragment())
                         .commit()
-                }else{
-                    // Jika sedang di log/about, kembali ke home
+                } else {
                     supportFragmentManager.beginTransaction()
                         .replace(R.id.container_fragment, HomeFragment.DahJalan())
                         .commit()
                 }
-
             }
             is HomeFragment.DahJalan -> {
-                // Di DahJalan → simpan sw = false, lalu keluar
-                getSharedPreferences("app_prefs", MODE_PRIVATE).edit()
-                    .putBoolean("sw", false)
-                    .apply()
-                finish() // langsung keluar app
+                if (doubleBackToExitPressedOnce1) {
+                    handler.removeCallbacks(resetBackPress1)
+                    getSharedPreferences("app_prefs", MODE_PRIVATE).edit()
+                        .putBoolean("sw", false)
+                        .apply()
+                    finish()
+                    return
+                }
+
+                doubleBackToExitPressedOnce1 = true
+                Toast.makeText(this, "Jika Anda Keluar, Notifikasi Akan Mati", Toast.LENGTH_SHORT).show()
+                handler.postDelayed(resetBackPress1, 2000)
             }
             is HomeFragment -> {
-                // Di Home → simpan sw = true, lalu keluar
-                getSharedPreferences("app_prefs", MODE_PRIVATE).edit()
-                    .putBoolean("sw", true)
-                    .apply()
-                finish()
+                if (doubleBackToExitPressedOnce) {
+                    handler.removeCallbacks(resetBackPress)
+                    getSharedPreferences("app_prefs", MODE_PRIVATE).edit()
+                        .putBoolean("sw", true)
+                        .apply()
+                    finish()
+                    return
+                }
+
+                doubleBackToExitPressedOnce = true
+                Toast.makeText(this, "Jika Anda Keluar, Notifikasi Akan Mati", Toast.LENGTH_SHORT).show()
+                handler.postDelayed(resetBackPress, 2000)
             }
             else -> {
-                // Default, fallback ke super
                 super.onBackPressed()
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // Remove both callbacks
+        handler.removeCallbacks(resetBackPress)
+        handler.removeCallbacks(resetBackPress1)
     }
 
 }

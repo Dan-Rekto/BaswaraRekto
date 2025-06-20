@@ -4,6 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/drawer_layout"
+    app:backgroundTint="@null"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
@@ -28,9 +29,8 @@
                 android:background="@drawable/circle"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
 
-                />
+                app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
                 android:id="@+id/text2"
@@ -105,14 +105,17 @@
             android:id="@+id/topi1"
             android:layout_width="229dp"
             android:layout_height="244dp"
-            android:layout_marginTop="-318dp"
+            android:layout_marginTop="220dp"
             android:background="@drawable/vector_name"
             android:gravity="center_horizontal"
+            android:rotation="180"
             android:visibility="visible"
+            app:layout_constraintBottom_toTopOf="@id/bulat"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.54"
+
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/bulat" />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <ImageView
             android:id="@+id/matadalam"
@@ -155,12 +158,17 @@
             android:id="@+id/silang"
             android:layout_width="100dp"
             android:layout_height="100dp"
+            android:layout_marginStart="10dp"
             android:layout_marginTop="9dp"
             android:background="@drawable/baseline_highlight_off_24"
-
+            android:gravity="center_horizontal"
+            style="@null"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="@id/Layberenti" />
 
         <TextView
+            android:textColor="@color/white"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="5dp"
@@ -168,7 +176,7 @@
             android:fontFamily="@font/mont"
             android:text="Stop Notifikasi"
             android:textSize="20dp"
-            android:textColor="@color/white"
+
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.52"
             app:layout_constraintStart_toStartOf="parent"
