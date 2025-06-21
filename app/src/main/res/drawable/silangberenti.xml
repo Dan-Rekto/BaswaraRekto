@@ -7,6 +7,6 @@
         android:color="@color/isitab"/>
 
     <size
-        android:width="120dp"
-        android:height="120dp"/>
+        android:width="90dp"
+        android:height="90dp"/>
 </shape>

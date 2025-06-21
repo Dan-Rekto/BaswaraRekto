@@ -1,5 +1,6 @@
 package com.example.worm
 
+import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Color
@@ -25,8 +26,10 @@ import androidx.fragment.app.Fragment
 import com.example.worm.ui.theme.SecondActivity
 import com.example.worm.ui.theme.WormTheme
 import com.google.android.material.navigation.NavigationView
+import kotlinx.coroutines.delay
 
 var sw:Boolean = true
+
 class HomeFragment : Fragment(R.layout.activity_main_uji) {
     override fun onViewCreated(v: View, b: Bundle?) {
         super.onViewCreated(v, b)
@@ -35,6 +38,8 @@ class HomeFragment : Fragment(R.layout.activity_main_uji) {
             parentFragmentManager.beginTransaction()
                 .replace(R.id.container_fragment, DahJalan())
                 .commit()
+            (activity as? MainActivity)?.updateToolbarColor()
+            (activity as? MainActivity)?.updateToolbarColor()
         }
     }
     class DahJalan : Fragment(R.layout.dahjalan) {
@@ -45,6 +50,7 @@ class HomeFragment : Fragment(R.layout.activity_main_uji) {
                 parentFragmentManager.beginTransaction()
                     .replace(R.id.container_fragment, HomeFragment())
                     .commit()
+                (activity as? MainActivity)?.updateToolbarColor()
             }
         }
     }
@@ -58,6 +64,8 @@ class MainActivity : AppCompatActivity() {
     private val handler = Handler(Looper.getMainLooper())
     private val resetBackPress = Runnable { doubleBackToExitPressedOnce = false }
     private val resetBackPress1 = Runnable { doubleBackToExitPressedOnce1 = false }
+    lateinit var toolbar: Toolbar
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit().clear().apply()
@@ -67,6 +75,9 @@ class MainActivity : AppCompatActivity() {
         val gnews: String = "bd93c4e2fcfe19b6239972ea95dd0512"
         val news: String = "13b9c989205c4629861ae9d6e3ceb728"
         val AI: String = "AIzaSyC8wJ_8GNj33Xp-pGC6vD6S0JlYB5eg07Y"
+
+        fun Context.dpToPx(dp: Int): Int =
+            (dp * resources.displayMetrics.density).toInt()
 
         supportFragmentManager.beginTransaction()
             .replace(R.id.container_fragment, HomeFragment())
@@ -100,13 +111,11 @@ class MainActivity : AppCompatActivity() {
         }
         content.addView(fragmentContainer)
 
-        // 4. Toolbar setup (keeping your existing code)
-        val toolbar = Toolbar(this).apply {
+        // 4. Toolbar setup (now accessible as property)
+        toolbar = Toolbar(this).apply {
             id = R.id.toolbardrawer
-                setBackgroundColor(Color.TRANSPARENT)
-                setTitleTextColor(Color.parseColor("#2b5f56"))
-
-
+            setBackgroundColor(if (sw) Color.parseColor("#2b5f56") else Color.WHITE)
+            setTitleTextColor(Color.TRANSPARENT)
 
             navigationIcon = ContextCompat.getDrawable(
                 context, android.R.drawable.ic_menu_sort_by_size
@@ -207,6 +216,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+    fun updateToolbarColor() {
+        toolbar.setBackgroundColor(if (sw) Color.parseColor("#2b5f56") else Color.WHITE)
+    }
+
     override fun onBackPressed() {
         val current = supportFragmentManager.findFragmentById(R.id.container_fragment)
 
@@ -262,11 +276,7 @@ class MainActivity : AppCompatActivity() {
         handler.removeCallbacks(resetBackPress)
         handler.removeCallbacks(resetBackPress1)
     }
-
 }
-
-
-
 
 class AboutFragment : Fragment(R.layout.aboutab) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

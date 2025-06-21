@@ -10,29 +10,179 @@
     android:background="@drawable/gradient">
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/frameLayout"
+        android:id="@+id/cons"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
+        <FrameLayout
+            android:id="@+id/frameLayout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" >
 
-        <ImageView
-            android:id="@+id/devPhoto1"
-            android:layout_width="200dp"
-            android:layout_height="200dp"
-            android:src="@mipmap/denis"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toTopOf="@id/devPhoto2"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            <ImageView
+                android:id="@+id/kotak"
+                android:layout_width="360dp"
+                android:layout_height="709dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="100dp"
+                android:layout_marginBottom="100dp"
+                android:background="@drawable/kotakputih"
+                android:orientation="vertical"
+                app:layout_constraintBottom_toTopOf="@id/bulat"
+                app:layout_constraintEnd_toStartOf="parent"
+                app:layout_constraintHorizontal_bias="0.1"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/frameLayout" />
 
-        <ImageView
-            android:id="@+id/devPhoto2"
-            android:layout_width="200dp"
-            android:layout_height="200dp"
-            android:src="@mipmap/rpel"
-            app:layout_constraintTop_toBottomOf="@id/devPhoto1"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            <ImageView
+                android:id="@+id/logo"
+                android:layout_width="250dp"
+                android:layout_height="250dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="30dp"
+                android:src="@drawable/logo"
+                app:layout_constraintBottom_toBottomOf="@id/kotak"
+                app:layout_constraintEnd_toEndOf="@id/kotak"
+                app:layout_constraintStart_toStartOf="@id/kotak" />
+
+
+            <ImageView
+                android:id="@+id/devPhoto1"
+                android:layout_width="85dp"
+                android:layout_height="85dp"
+                android:layout_gravity="right"
+                android:layout_marginTop="480dp"
+                android:layout_marginRight="45dp"
+                android:src="@mipmap/denis"
+                android:visibility="visible"
+                app:layout_constraintBottom_toTopOf="@id/devPhoto2"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <ImageView
+                android:id="@+id/ig1"
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                android:layout_gravity="right"
+                android:layout_marginTop="620dp"
+                android:layout_marginRight="155dp"
+                android:src="@drawable/insta"
+                android:visibility="invisible"
+                app:layout_constraintBottom_toTopOf="@id/devPhoto2"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <ImageView
+                android:id="@+id/ig2"
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                android:layout_marginLeft="26dp"
+                android:layout_marginTop="620dp"
+                android:src="@drawable/insta"
+                android:visibility="invisible"
+                app:layout_constraintBottom_toTopOf="@id/devPhoto2"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+
+            <TextView
+                android:id="@+id/den"
+                android:layout_width="151dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginLeft="104dp"
+                android:layout_marginTop="215dp"
+                android:fontFamily="@font/mont"
+                android:text="Danish Fattah Azizi,
+                Head Developer"
+                android:textAlignment="center"
+                android:textColor="@color/isitab"
+                app:layout_constraintTop_toBottomOf="@id/devPhoto1"
+                app:layout_constraintTop_toTopOf="@id/logo" />
+
+            <TextView
+                android:id="@+id/den1"
+                android:layout_width="151dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginLeft="110dp"
+                android:layout_marginTop="257dp"
+                android:fontFamily="@font/mont"
+                android:text="@string/denisjagobos"
+                android:textAlignment="center"
+                android:textColor="@color/isitab"
+                app:layout_constraintTop_toBottomOf="@id/devPhoto1"
+                app:layout_constraintTop_toTopOf="@id/logo" />
+
+            <TextView
+                android:id="@+id/pel"
+                android:layout_width="187dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="215dp"
+                android:layout_marginRight="100dp"
+                android:fontFamily="@font/mont"
+                android:text="Moch. Rafel Saputra,
+                Chief Inventor"
+                android:textAlignment="center"
+                android:textColor="@color/isitab"
+                app:layout_constraintTop_toBottomOf="@id/devPhoto1"
+                app:layout_constraintTop_toTopOf="@id/logo" />
+
+            <TextView
+                android:id="@+id/mrafels"
+                android:layout_width="187dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="257dp"
+                android:layout_marginRight="110dp"
+                android:fontFamily="@font/mont"
+                android:text="@string/mrafels"
+                android:textAlignment="center"
+                android:textColor="@color/isitab"
+                app:layout_constraintTop_toBottomOf="@id/devPhoto1"
+                app:layout_constraintTop_toTopOf="@id/logo" />
+
+            <TextView
+                android:layout_width="323dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="205dp"
+                android:fontFamily="@font/mont"
+                android:justificationMode="inter_word"
+                android:text="Baswara, merupakan aplikasi buatan anak bangsa yang berperan dalam memberantas Konten Hoax yang ada di Indonesia. Baswara dibuat di Android Studio dan sudah diintegrasikan dengan teknologi OCR dan analisis AI yang memudahkan eksekusi tugasnya. Mari bersama buat Indonesia yang lebih baik dan anti Hoaks!
+"
+                android:textAlignment="center"
+                android:textColor="@color/isitab"
+                android:textSize="16dp"
+                app:layout_constraintTop_toTopOf="@id/logo" />
+
+            <ImageView
+                android:id="@+id/iglogo"
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                android:src="@drawable/insta"
+                android:visibility="invisible"
+                app:layout_constraintBottom_toTopOf="@id/devPhoto2"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <ImageView
+                android:id="@+id/devPhoto2"
+                android:layout_width="85dp"
+                android:layout_height="85dp"
+                android:layout_marginLeft="45dp"
+                android:layout_marginTop="480dp"
+                android:src="@mipmap/rpel"
+                android:visibility="visible"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/devPhoto1" />
+        </FrameLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
