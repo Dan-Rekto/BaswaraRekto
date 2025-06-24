@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.os.Bundle
 import android.util.TypedValue
@@ -21,10 +22,12 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
+import com.example.worm.ui.theme.RunningService
 import com.example.worm.ui.theme.SecondActivity
 import com.example.worm.ui.theme.WormTheme
 import com.google.android.material.navigation.NavigationView
@@ -42,8 +45,14 @@ class HomeFragment : Fragment(R.layout.activity_main_uji) {
                 .replace(R.id.container_fragment, DahJalan())
                 .commit()
             (activity as? MainActivity)?.updateToolbarColor()
+            // 1) Buat intent baru
+            val intent = Intent(requireContext(), RunningService::class.java)
+            // 2) Set action secara langsung
+            intent.action = RunningService.ACTION_START.toString()
+            // 3) Mulai service
+            requireContext().startService(intent)
+            }
         }
-    }
     class DahJalan : Fragment(R.layout.dahjalan) {
         override fun onViewCreated(v: View, b: Bundle?) {
             super.onViewCreated(v, b)
@@ -53,6 +62,12 @@ class HomeFragment : Fragment(R.layout.activity_main_uji) {
                     .replace(R.id.container_fragment, HomeFragment())
                     .commit()
                 (activity as? MainActivity)?.updateToolbarColor()
+                // 1) Buat intent baru
+                val intent = Intent(requireContext(), RunningService::class.java)
+                // 2) Set action secara langsung
+                intent.action = RunningService.ACTION_STOP.toString()
+                // 3) Mulai service
+                requireContext().startService(intent)
             }
         }
     }
@@ -68,11 +83,35 @@ class MainActivity : AppCompatActivity() {
     private val resetBackPress1 = Runnable { doubleBackToExitPressedOnce1 = false }
     lateinit var toolbar: Toolbar
 
+    private lateinit var mediaProjectionManager : MediaProjectionManager
+
+    // Launcher untuk menangani hasil dari permintaan izin screen capture
+    private val mediaProjectionLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK && result.data != null) {
+            // Izin diberikan oleh pengguna
+            // Buat Intent untuk memulai service
+            val serviceIntent = Intent(this, RunningService::class.java).apply {
+                // Kirim data hasil izin ke service
+                putExtra(RunningService.EXTRA_RESULT_CODE, result.resultCode)
+                putExtra(RunningService.EXTRA_RESULT_DATA, result.data)
+            }
+
+            // Mulai service dalam mode foreground
+            ContextCompat.startForegroundService(this, serviceIntent)
+        } else {
+            // Izin ditolak oleh pengguna
+            Toast.makeText(this, "Izin merekam layar ditolak!", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit().clear().apply()
         sw = true
         enableEdgeToEdge()
+        mediaProjectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
         val newsid: String = "a895c9b8cc274495a67cdaec6922fe8c"
         val gnews: String = "bd93c4e2fcfe19b6239972ea95dd0512"
         val news: String = "13b9c989205c4629861ae9d6e3ceb728"
@@ -170,13 +209,13 @@ class MainActivity : AppCompatActivity() {
                 })
             }
             addHeaderView(header)
-
+            menu.add(Menu.NONE, 3, Menu.NONE, "Home")
+                .icon = ContextCompat.getDrawable(context, android.R.drawable.ic_media_next)
             menu.add(Menu.NONE, 1, Menu.NONE, "Log Pengecekan")
                 .icon = ContextCompat.getDrawable(context, android.R.drawable.ic_menu_search)
             menu.add(Menu.NONE, 2, Menu.NONE, "Tentang Kami")
                 .icon = ContextCompat.getDrawable(context, android.R.drawable.ic_menu_info_details)
-            menu.add(Menu.NONE, 3, Menu.NONE, "Home")
-                .icon = ContextCompat.getDrawable(context, android.R.drawable.ic_media_next)
+
 
             setNavigationItemSelectedListener { menuItem ->
                 when (menuItem.itemId) {
@@ -241,10 +280,22 @@ class MainActivity : AppCompatActivity() {
         toolbar.setBackgroundColor(if (sw) Color.parseColor("#2b5f56") else Color.WHITE)
     }
     fun updateToolbarColorlg() {
-        toolbar.setBackgroundColor(if (!lg) Color.parseColor("#2b5f56") else Color.WHITE)
+        if (!lg){
+            toolbar.setBackgroundColor (Color.parseColor("#2b5f56"))
+        }else if (lg && sw){
+            toolbar.setBackgroundColor (Color.parseColor("#2b5f56"))
+        }else{
+            toolbar.setBackgroundColor(Color.WHITE)
+        }
     }
     fun updateToolbarColorab() {
-        toolbar.setBackgroundColor(if (!ab) Color.parseColor("#2b5f56") else Color.WHITE)
+        if (!ab){
+            toolbar.setBackgroundColor (Color.parseColor("#2b5f56"))
+        }else if (ab && sw){
+            toolbar.setBackgroundColor (Color.parseColor("#2b5f56"))
+        }else{
+            toolbar.setBackgroundColor(Color.WHITE)
+        }
     }
 
     override fun onBackPressed() {
