@@ -9,6 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,9 +26,12 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R. layout. activity_main)
+        val button1: Button = findViewById(R.id.Button1)
+        button1.setOnClickListener {
 
+        }
 
-    }
+        }
 }
 
 @Composable
@@ -42,6 +46,6 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 
 fun GreetingPreview() {
     WormTheme {
-        Greeting("Sinister")
+        Greeting("Baswara")
     }
 }
