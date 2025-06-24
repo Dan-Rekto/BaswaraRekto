@@ -76,8 +76,10 @@
 
         <ImageView
             android:id="@+id/Button1"
-            android:layout_width="115dp"
-            android:layout_height="105dp"
+            android:layout_height="0dp"
+            android:layout_width="0dp"
+            app:layout_constraintWidth_percent="0.28"
+            app:layout_constraintHeight_percent="0.12"
             android:layout_marginBottom="370dp"
             android:background="@drawable/tombol"
             android:visibility="visible"
@@ -103,8 +105,10 @@
 
         <Button
             android:id="@+id/matadalam"
-            android:layout_width="60dp"
-            android:layout_height="50dp"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintWidth_percent="0.16"
+            app:layout_constraintHeight_percent="0.058"
             android:layout_marginTop="235dp"
             android:background="@drawable/mata"
             android:gravity="center_horizontal"
@@ -113,14 +117,16 @@
             app:layout_constraintHorizontal_bias="0.54"
             app:layout_constraintStart_toStartOf="@id/mataluar"
             app:layout_constraintTop_toTopOf="@id/mataluar"
-            app:layout_constraintVertical_bias="0.32999998" />
+            app:layout_constraintVertical_bias="0.32999998" /> <!-- matadalam done-->
 
 
 
         <ImageView
             android:id="@+id/pupil"
-            android:layout_width="17dp"
-            android:layout_height="17dp"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintWidth_percent="0.037"
+            app:layout_constraintHeight_percent="0.018"
             android:layout_marginTop="180dp"
             android:background="@drawable/pupil"
             android:gravity="center_horizontal"
@@ -136,12 +142,12 @@
             android:id="@+id/judul"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="13dp"
+            android:layout_marginTop="45dp"
             android:fontFamily="@font/mont"
             android:gravity="center_horizontal"
             android:text="Baswara"
             android:textColor="@color/Baswara"
-            android:textSize="75dp"
+            android:textSize="69dp"
             android:visibility="visible"
             app:layout_constraintEnd_toStartOf="@+id/frameLayout"
             app:layout_constraintHorizontal_bias="0.5"

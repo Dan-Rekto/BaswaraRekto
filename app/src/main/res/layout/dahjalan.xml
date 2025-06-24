@@ -4,6 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/drawer_layout"
+    app:backgroundTint="@null"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
@@ -28,9 +29,8 @@
                 android:background="@drawable/circle"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
 
-                />
+                app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
                 android:id="@+id/text2"
@@ -40,17 +40,6 @@
                 android:layout_marginTop="900dp"
                 android:text="Halo!"
                 android:textStyle="bold|italic" />
-
-            <Button
-                android:text="."
-                android:id="@+id/tab"
-                android:layout_width="39dp"
-                android:layout_height="29dp"
-                android:layout_marginTop="5dp"
-                android:alpha="1"
-                android:background="@drawable/tab"
-                android:gravity="center_horizontal"
-                android:rotationX="0" />
 
 
         </FrameLayout>
@@ -116,14 +105,17 @@
             android:id="@+id/topi1"
             android:layout_width="229dp"
             android:layout_height="244dp"
-            android:layout_marginTop="-318dp"
+            android:layout_marginTop="220dp"
             android:background="@drawable/vector_name"
             android:gravity="center_horizontal"
+            android:rotation="180"
             android:visibility="visible"
+            app:layout_constraintBottom_toTopOf="@id/bulat"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.54"
+
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/bulat" />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <ImageView
             android:id="@+id/matadalam"
@@ -141,8 +133,8 @@
             android:id="@+id/pupil"
             android:layout_width="17dp"
             android:layout_height="17dp"
-            android:layout_marginStart="238dp"
-            android:layout_marginTop="-10dp"
+            android:layout_marginStart="200dp"
+            android:layout_marginTop="50dp"
             android:background="@drawable/pupil"
             android:gravity="center_horizontal"
             app:layout_constraintStart_toStartOf="parent"
@@ -152,9 +144,10 @@
             android:id="@+id/Layberenti"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="360dp"
+            android:layout_marginTop="420dp"
             android:background="@drawable/silangberenti"
             android:foregroundGravity="center"
+            android:visibility="visible"
             app:layout_constraintBottom_toTopOf="@+id/frameLayout"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.52"
@@ -162,23 +155,28 @@
             app:layout_constraintTop_toTopOf="@id/judul" />
 
         <Button
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:layout_marginStart="162dp"
+            android:id="@+id/silang"
+            android:layout_width="70dp"
+            android:layout_height="70dp"
+            android:layout_marginStart="10dp"
             android:layout_marginTop="9dp"
             android:background="@drawable/baseline_highlight_off_24"
-            android:text="."
+            android:gravity="center_horizontal"
+            style="@null"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="@id/Layberenti" />
 
         <TextView
+            android:textColor="@color/white"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
-            android:alpha="0.5"
+            android:layout_marginTop="15dp"
+            android:alpha="1"
             android:fontFamily="@font/mont"
             android:text="Stop Notifikasi"
             android:textSize="20dp"
+
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.52"
             app:layout_constraintStart_toStartOf="parent"
@@ -194,7 +192,7 @@
             android:text="Baswara"
             android:textColor="@color/Baswara"
             android:textSize="75dp"
-            android:visibility="visible"
+            android:visibility="invisible"
             app:layout_constraintEnd_toStartOf="@+id/frameLayout"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toEndOf="@+id/frameLayout"
