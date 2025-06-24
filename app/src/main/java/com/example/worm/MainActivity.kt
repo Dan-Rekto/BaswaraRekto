@@ -1,9 +1,11 @@
 package com.example.worm
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.Gravity
@@ -19,16 +21,17 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.ui.res.colorResource
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import com.example.worm.ui.theme.SecondActivity
 import com.example.worm.ui.theme.WormTheme
 import com.google.android.material.navigation.NavigationView
-import kotlinx.coroutines.delay
 
-var sw:Boolean = true
+var sw: Boolean = true
+var ab: Boolean = false
+var lg: Boolean = false
 
 class HomeFragment : Fragment(R.layout.activity_main_uji) {
     override fun onViewCreated(v: View, b: Bundle?) {
@@ -38,7 +41,6 @@ class HomeFragment : Fragment(R.layout.activity_main_uji) {
             parentFragmentManager.beginTransaction()
                 .replace(R.id.container_fragment, DahJalan())
                 .commit()
-            (activity as? MainActivity)?.updateToolbarColor()
             (activity as? MainActivity)?.updateToolbarColor()
         }
     }
@@ -58,7 +60,7 @@ class HomeFragment : Fragment(R.layout.activity_main_uji) {
 
 class MainActivity : AppCompatActivity() {
     private val PREFS_NAME = "app_prefs"
-    private val KEY_SW    = "sw"
+    private val KEY_SW = "sw"
     private var doubleBackToExitPressedOnce = false
     private var doubleBackToExitPressedOnce1 = false  // For DahJalan
     private val handler = Handler(Looper.getMainLooper())
@@ -75,6 +77,13 @@ class MainActivity : AppCompatActivity() {
         val gnews: String = "bd93c4e2fcfe19b6239972ea95dd0512"
         val news: String = "13b9c989205c4629861ae9d6e3ceb728"
         val AI: String = "AIzaSyC8wJ_8GNj33Xp-pGC6vD6S0JlYB5eg07Y"
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                0
+            )
+        }
 
         fun Context.dpToPx(dp: Int): Int =
             (dp * resources.displayMetrics.density).toInt()
@@ -118,13 +127,13 @@ class MainActivity : AppCompatActivity() {
             setTitleTextColor(Color.TRANSPARENT)
 
             navigationIcon = ContextCompat.getDrawable(
-                context, android.R.drawable.ic_menu_sort_by_size
+                this@MainActivity, android.R.drawable.ic_menu_sort_by_size
             )
-            navigationIcon?.setTint(ContextCompat.getColor(context, R.color.tabmenu))
+            navigationIcon?.setTint(ContextCompat.getColor(this@MainActivity, R.color.tabmenu))
             setNavigationOnClickListener { drawer.openDrawer(Gravity.START) }
 
             val tv = TypedValue()
-            context.theme.resolveAttribute(
+            this@MainActivity.theme.resolveAttribute(
                 androidx.appcompat.R.attr.actionBarSize, tv, true
             )
             val actionBarHeightPx = TypedValue.complexToDimensionPixelSize(
@@ -141,7 +150,7 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         content.addView(toolbar)
 
-        // 5. Navigation drawer (keeping your existing code)
+        // 5. Navigation drawer
         val navView = NavigationView(this).apply {
             id = R.id.navdrawer
             val width = (resources.displayMetrics.widthPixels * 0.75).toInt()
@@ -163,31 +172,41 @@ class MainActivity : AppCompatActivity() {
             addHeaderView(header)
 
             menu.add(Menu.NONE, 1, Menu.NONE, "Log Pengecekan")
-                .icon = getDrawable(android.R.drawable.ic_menu_search)
+                .icon = ContextCompat.getDrawable(context, android.R.drawable.ic_menu_search)
             menu.add(Menu.NONE, 2, Menu.NONE, "Tentang Kami")
-                .icon = getDrawable(android.R.drawable.ic_menu_info_details)
+                .icon = ContextCompat.getDrawable(context, android.R.drawable.ic_menu_info_details)
             menu.add(Menu.NONE, 3, Menu.NONE, "Home")
-                .icon = getDrawable(android.R.drawable.ic_media_next)
+                .icon = ContextCompat.getDrawable(context, android.R.drawable.ic_media_next)
 
             setNavigationItemSelectedListener { menuItem ->
                 when (menuItem.itemId) {
-                    3 -> if (sw){
+                    3 -> if (sw) {
                         supportFragmentManager.beginTransaction()
                             .replace(R.id.container_fragment, HomeFragment())
                             .commit()
-                    }else{
+                    } else {
                         supportFragmentManager.beginTransaction()
                             .replace(R.id.container_fragment, HomeFragment.DahJalan())
                             .commit()
                     }
-                    1 -> supportFragmentManager.beginTransaction()
-                        .replace(R.id.container_fragment, LogFragment())
-                        .addToBackStack(null)
-                        .commit()
-                    2 -> supportFragmentManager.beginTransaction()
-                        .replace(R.id.container_fragment, AboutFragment())
-                        .addToBackStack(null)
-                        .commit()
+
+                    1 -> {
+                        lg = false
+                        supportFragmentManager.beginTransaction()
+                            .replace(R.id.container_fragment, LogFragment())
+                            .addToBackStack(null)
+                            .commit()
+                        updateToolbarColorlg()
+                    }
+
+                    2 -> {
+                        ab = false
+                        supportFragmentManager.beginTransaction()
+                            .replace(R.id.container_fragment, AboutFragment())
+                            .addToBackStack(null)
+                            .commit()
+                        updateToolbarColorab()
+                    }
                 }
                 drawer.closeDrawer(Gravity.START)
                 true
@@ -204,7 +223,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(drawer)
 
         // 8. Initial fragment
-        if (savedInstanceState == null) {
+        if (savedInstanceState == null)
+        {
             if (sw) {
                 supportFragmentManager.beginTransaction()
                     .replace(R.id.container_fragment, HomeFragment())
@@ -220,20 +240,45 @@ class MainActivity : AppCompatActivity() {
     fun updateToolbarColor() {
         toolbar.setBackgroundColor(if (sw) Color.parseColor("#2b5f56") else Color.WHITE)
     }
+    fun updateToolbarColorlg() {
+        toolbar.setBackgroundColor(if (!lg) Color.parseColor("#2b5f56") else Color.WHITE)
+    }
+    fun updateToolbarColorab() {
+        toolbar.setBackgroundColor(if (!ab) Color.parseColor("#2b5f56") else Color.WHITE)
+    }
 
     override fun onBackPressed() {
         val current = supportFragmentManager.findFragmentById(R.id.container_fragment)
 
         when (current) {
-            is LogFragment, is AboutFragment -> {
+            is LogFragment -> {
                 if (sw) {
+                    lg = true
                     supportFragmentManager.beginTransaction()
                         .replace(R.id.container_fragment, HomeFragment())
                         .commit()
+                    updateToolbarColorlg()
                 } else {
+                    lg = true
                     supportFragmentManager.beginTransaction()
                         .replace(R.id.container_fragment, HomeFragment.DahJalan())
                         .commit()
+                    updateToolbarColorlg()
+                }
+            }
+            is AboutFragment -> {
+                if (sw) {
+                    ab = true
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.container_fragment, HomeFragment())
+                        .commit()
+                    updateToolbarColorab()
+                } else {
+                    ab = true
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.container_fragment, HomeFragment.DahJalan())
+                        .commit()
+                    updateToolbarColorab()
                 }
             }
             is HomeFragment.DahJalan -> {
