@@ -38,6 +38,7 @@
                 android:rotationX="0"
                 android:text="."
                 android:textColor="@color/Hijau_tua"
+                android:visibility="invisible"
                 app:layout_constraintStart_toStartOf="@id/judul"
                 app:layout_constraintTop_toTopOf="@id/judul" />
 

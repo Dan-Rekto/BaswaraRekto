@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.graphics.drawable.Drawable
 import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.os.Bundle
@@ -14,6 +15,7 @@ import android.view.Menu
 import android.view.View
 import android.os.Handler
 import android.os.Looper
+import android.text.TextUtils.replace
 import android.widget.Toast
 import android.widget.Button
 import android.widget.FrameLayout
@@ -27,7 +29,11 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
+import com.example.worm.HomeFragment.DahJalan
+import com.example.worm.ui.theme.RunningService.Companion.jalan
 import com.example.worm.ui.theme.RunningService
+
+import com.example.worm.HomeFragment
 import com.example.worm.ui.theme.SecondActivity
 import com.example.worm.ui.theme.WormTheme
 import com.google.android.material.navigation.NavigationView
@@ -45,12 +51,9 @@ class HomeFragment : Fragment(R.layout.activity_main_uji) {
                 .replace(R.id.container_fragment, DahJalan())
                 .commit()
             (activity as? MainActivity)?.updateToolbarColor()
-            // 1) Buat intent baru
-            val intent = Intent(requireContext(), RunningService::class.java)
-            // 2) Set action secara langsung
-            intent.action = RunningService.ACTION_START.toString()
             // 3) Mulai service
-            requireContext().startService(intent)
+            (activity as? MainActivity)?.requestScreenCapturePermission()
+
             }
         }
     class DahJalan : Fragment(R.layout.dahjalan) {
@@ -62,12 +65,7 @@ class HomeFragment : Fragment(R.layout.activity_main_uji) {
                     .replace(R.id.container_fragment, HomeFragment())
                     .commit()
                 (activity as? MainActivity)?.updateToolbarColor()
-                // 1) Buat intent baru
-                val intent = Intent(requireContext(), RunningService::class.java)
-                // 2) Set action secara langsung
-                intent.action = RunningService.ACTION_STOP.toString()
-                // 3) Mulai service
-                requireContext().startService(intent)
+                (activity as? MainActivity)?.stopScreenCapture()
             }
         }
     }
@@ -83,27 +81,72 @@ class MainActivity : AppCompatActivity() {
     private val resetBackPress1 = Runnable { doubleBackToExitPressedOnce1 = false }
     lateinit var toolbar: Toolbar
 
-    private lateinit var mediaProjectionManager : MediaProjectionManager
+    private lateinit var mediaProjectionManager: MediaProjectionManager
 
-    // Launcher untuk menangani hasil dari permintaan izin screen capture
+    private fun handleNavigationIntent(intent: Intent) {
+        when (intent.getStringExtra("navigate_to")) {
+            "stop_and_home" -> {
+                // 1) Stop service
+                Intent(this, RunningService::class.java).also { svc ->
+                    svc.action = RunningService.ACTION_STOP
+                    startService(svc)
+                }
+                // 2) Navigate ke HomeFragment
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.container_fragment, HomeFragment())
+                    .commitAllowingStateLoss()
+                sw = true
+                // 3) Update toolbar
+                updateToolbarColor()
+                Toast.makeText(this, "Notifikasi Dimatikan", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleNavigationIntent(intent)
+    }
+
+
     private val mediaProjectionLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == RESULT_OK && result.data != null) {
-            // Izin diberikan oleh pengguna
-            // Buat Intent untuk memulai service
+            // Izin diberikan! Sekarang kita mulai service DAN perbarui UI.
+            sw = false
+
             val serviceIntent = Intent(this, RunningService::class.java).apply {
-                // Kirim data hasil izin ke service
+                action = RunningService.ACTION_START
                 putExtra(RunningService.EXTRA_RESULT_CODE, result.resultCode)
                 putExtra(RunningService.EXTRA_RESULT_DATA, result.data)
             }
-
-            // Mulai service dalam mode foreground
             ContextCompat.startForegroundService(this, serviceIntent)
+
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.container_fragment, HomeFragment.DahJalan())
+                .commit()
+            updateToolbarColor()
+
         } else {
-            // Izin ditolak oleh pengguna
             Toast.makeText(this, "Izin merekam layar ditolak!", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    fun requestScreenCapturePermission() {
+        mediaProjectionLauncher.launch(mediaProjectionManager.createScreenCaptureIntent())
+    }
+
+    fun stopScreenCapture() {
+        sw = true
+
+        val intent = Intent(this, RunningService::class.java)
+        intent.action = RunningService.ACTION_STOP
+        startService(intent)
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.container_fragment, HomeFragment())
+            .commit()
+        updateToolbarColor()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -127,9 +170,16 @@ class MainActivity : AppCompatActivity() {
         fun Context.dpToPx(dp: Int): Int =
             (dp * resources.displayMetrics.density).toInt()
 
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.container_fragment, HomeFragment())
-            .commit()
+        if (RunningService.jalan){
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.container_fragment, HomeFragment.DahJalan())
+                .commit()
+        }else{
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.container_fragment, HomeFragment())
+                .commit()
+        }
+
 
         // 1. Root DrawerLayout
         val drawer = DrawerLayout(this).apply {
@@ -208,9 +258,10 @@ class MainActivity : AppCompatActivity() {
                     setTypeface(null, android.graphics.Typeface.BOLD)
                 })
             }
+            val home = (R.drawable.home_svgrepo_com)
             addHeaderView(header)
             menu.add(Menu.NONE, 3, Menu.NONE, "Home")
-                .icon = ContextCompat.getDrawable(context, android.R.drawable.ic_media_next)
+                .setIcon(R.drawable.home_svgrepo_com)
             menu.add(Menu.NONE, 1, Menu.NONE, "Log Pengecekan")
                 .icon = ContextCompat.getDrawable(context, android.R.drawable.ic_menu_search)
             menu.add(Menu.NONE, 2, Menu.NONE, "Tentang Kami")
@@ -223,10 +274,12 @@ class MainActivity : AppCompatActivity() {
                         supportFragmentManager.beginTransaction()
                             .replace(R.id.container_fragment, HomeFragment())
                             .commit()
+                        updateToolbarColor()
                     } else {
                         supportFragmentManager.beginTransaction()
                             .replace(R.id.container_fragment, HomeFragment.DahJalan())
                             .commit()
+                        updateToolbarColor()
                     }
 
                     1 -> {
@@ -273,6 +326,7 @@ class MainActivity : AppCompatActivity() {
                     .replace(R.id.container_fragment, HomeFragment.DahJalan())
                     .commit()
             }
+            handleNavigationIntent(intent)
         }
     }
 
@@ -357,7 +411,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 doubleBackToExitPressedOnce = true
-                Toast.makeText(this, "Jika Anda Keluar, Notifikasi Akan Mati", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Ketuk Sekali Lagi Untuk Keluar", Toast.LENGTH_SHORT).show()
                 handler.postDelayed(resetBackPress, 2000)
             }
             else -> {
@@ -371,6 +425,7 @@ class MainActivity : AppCompatActivity() {
         // Remove both callbacks
         handler.removeCallbacks(resetBackPress)
         handler.removeCallbacks(resetBackPress1)
+        stopScreenCapture()
     }
 }
 
