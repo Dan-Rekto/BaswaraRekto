@@ -20,7 +20,6 @@ import com.example.worm.sw
 
 class RunningService : Service() {
     private var mediaProjection: MediaProjection? = null
-
     companion object {
         var jalan:Boolean = false
         const val ACTION_START = "ACTION_START_PROJECTION"
@@ -30,6 +29,7 @@ class RunningService : Service() {
         const val ACTION_SCREEN   = "ACTION_SCREENSHOT"
         private const val NOTIFICATION_ID = 1
         private const val NOTIFICATION_CHANNEL_ID = "baswara-media-projection-channel"
+        private const val NOTIFICATION_CHANNEL_SECOND = "baswara-notification-channel"
         private const val NOTIFICATION_CHANNEL_NAME = "Layanan Pindai Layar Baswara"
     }
 

@@ -4,7 +4,9 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
-
+import android.os.Bundle
+import androidx.core.app.NotificationCompat
+import com.example.worm.R
 class RunningApp : Application() {
     override fun onCreate(){
         super.onCreate()

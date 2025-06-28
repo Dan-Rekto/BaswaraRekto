@@ -27,6 +27,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import com.example.worm.HomeFragment.DahJalan
@@ -41,7 +42,7 @@ import com.google.android.material.navigation.NavigationView
 var sw: Boolean = true
 var ab: Boolean = false
 var lg: Boolean = false
-
+var warnabtn = Color.parseColor("#2b5f56")
 class HomeFragment : Fragment(R.layout.activity_main_uji) {
     override fun onViewCreated(v: View, b: Bundle?) {
         super.onViewCreated(v, b)
@@ -54,8 +55,8 @@ class HomeFragment : Fragment(R.layout.activity_main_uji) {
             // 3) Mulai service
             (activity as? MainActivity)?.requestScreenCapturePermission()
 
-            }
         }
+    }
     class DahJalan : Fragment(R.layout.dahjalan) {
         override fun onViewCreated(v: View, b: Bundle?) {
             super.onViewCreated(v, b)
@@ -80,6 +81,7 @@ class MainActivity : AppCompatActivity() {
     private val resetBackPress = Runnable { doubleBackToExitPressedOnce = false }
     private val resetBackPress1 = Runnable { doubleBackToExitPressedOnce1 = false }
     lateinit var toolbar: Toolbar
+    private lateinit var drawer: DrawerLayout // Tambahkan variabel drawer sebagai property
 
     private lateinit var mediaProjectionManager: MediaProjectionManager
 
@@ -182,7 +184,7 @@ class MainActivity : AppCompatActivity() {
 
 
         // 1. Root DrawerLayout
-        val drawer = DrawerLayout(this).apply {
+        drawer = DrawerLayout(this).apply { // Ubah val menjadi assignment ke property
             id = R.id.drawerdrawer
             layoutParams = FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
@@ -215,11 +217,39 @@ class MainActivity : AppCompatActivity() {
             setBackgroundColor(if (sw) Color.parseColor("#2b5f56") else Color.WHITE)
             setTitleTextColor(Color.TRANSPARENT)
 
-            navigationIcon = ContextCompat.getDrawable(
-                this@MainActivity, android.R.drawable.ic_menu_sort_by_size
+            val icon = ContextCompat.getDrawable(this@MainActivity, android.R.drawable.ic_menu_sort_by_size)
+            icon?.setTint(ContextCompat.getColor(this@MainActivity, R.color.tabmenu))
+
+// 2. Buat button
+            var btnMenu = Button(this@MainActivity).apply {
+                setTitleTextColor(Color.TRANSPARENT)
+                setBackgroundColor(Color.TRANSPARENT)
+                // Set icon di kiri teks tombol
+                setCompoundDrawablesWithIntrinsicBounds(icon, null, null, null)
+                compoundDrawablePadding = 16 // jarak antara icon dan text
+                setPadding(dpToPx(5), dpToPx(24), paddingRight, paddingBottom)
+                setOnClickListener {
+                    if (drawer.isDrawerOpen(GravityCompat.START)) {
+                        drawer.closeDrawer(GravityCompat.START)
+                    } else {
+                        drawer.openDrawer(GravityCompat.START)
+                    }
+                }
+            }
+
+// 3. Atur posisi tombol
+            val params = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT
             )
-            navigationIcon?.setTint(ContextCompat.getColor(this@MainActivity, R.color.tabmenu))
-            setNavigationOnClickListener { drawer.openDrawer(Gravity.START) }
+            params.gravity = Gravity.TOP or Gravity.START
+            btnMenu.layoutParams = params
+
+// 4. Tambahkan ke layout
+            content.addView(btnMenu)
+
+            // Tambahkan padding untuk menurunkan icon
+            setPadding(paddingLeft, dpToPx(18), paddingRight, paddingBottom) // 8dp padding top
 
             val tv = TypedValue()
             this@MainActivity.theme.resolveAttribute(
@@ -300,7 +330,7 @@ class MainActivity : AppCompatActivity() {
                         updateToolbarColorab()
                     }
                 }
-                drawer.closeDrawer(Gravity.START)
+                drawer.closeDrawer(GravityCompat.START)
                 true
             }
         }
@@ -332,23 +362,34 @@ class MainActivity : AppCompatActivity() {
 
     fun updateToolbarColor() {
         toolbar.setBackgroundColor(if (sw) Color.parseColor("#2b5f56") else Color.WHITE)
+        if (sw){
+          warnabtn = Color.parseColor("#2b5f56")
+        }else{
+          warnabtn = Color.WHITE
+        }
     }
     fun updateToolbarColorlg() {
         if (!lg){
             toolbar.setBackgroundColor (Color.parseColor("#2b5f56"))
+            warnabtn = Color.parseColor("#2b5f56")
         }else if (lg && sw){
             toolbar.setBackgroundColor (Color.parseColor("#2b5f56"))
+            warnabtn = Color.parseColor("#2b5f56")
         }else{
             toolbar.setBackgroundColor(Color.WHITE)
+            warnabtn = Color.WHITE
         }
     }
     fun updateToolbarColorab() {
         if (!ab){
             toolbar.setBackgroundColor (Color.parseColor("#2b5f56"))
+            warnabtn = Color.parseColor("#2b5f56")
         }else if (ab && sw){
             toolbar.setBackgroundColor (Color.parseColor("#2b5f56"))
+            warnabtn = Color.parseColor("#2b5f56")
         }else{
             toolbar.setBackgroundColor(Color.WHITE)
+            warnabtn = Color.WHITE
         }
     }
 

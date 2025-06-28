@@ -2,4 +2,6 @@
     <string name="app_name">Baswara</string>
     <string name="mrafels">"@m.rafels"</string>
     <string name="denisjagobos">"@denisjagobos"</string>
+    <string name="navigation_drawer_open">"buka"</string>
+    <string name="navigation_drawer_close">"tutup"</string>
 </resources>
