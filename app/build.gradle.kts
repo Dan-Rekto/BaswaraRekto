@@ -55,6 +55,8 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.squareup.retrofit2:converter-jackson:2.9.0")
     implementation("com.google.ai.client.generativeai:generativeai:0.7.0")
+    implementation ("com.google.mlkit:text-recognition:16.0.1")
+    implementation ("com.vanniktech:android-image-cropper:4.5.0")
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
     testImplementation(libs.junit)

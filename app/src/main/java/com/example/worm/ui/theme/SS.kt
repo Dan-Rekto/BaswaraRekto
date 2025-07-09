@@ -1,7 +1,7 @@
 package com.example.worm.ui.theme
 
 import android.app.Notification
-import android.content.Intent
+
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
@@ -11,7 +11,6 @@ import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
 import androidx.core.app.NotificationManagerCompat
-import okhttp3.internal.notify
 
 // ScreenshotProxyActivity.kt
 class ScreenshotProxyActivity : AppCompatActivity() {
@@ -44,7 +43,18 @@ class ScreenshotProxyActivity : AppCompatActivity() {
 
         super.onCreate(savedInstanceState)
         val notificationManager = NotificationManagerCompat.from(this)
-        notificationManager.notify(1001, builder.build())
+        val channel = NotificationChannel(
+            "NIGGER",
+            "SKIBIDIUS",
+            NotificationManager.IMPORTANCE_HIGH
+        )
+        channel.enableVibration(true)
+        channel.enableLights(true)
+        channel.lockscreenVisibility
+        // Uncomment and customize if you want a custom sound:
+        // channel.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION), null)
+        val manager = getSystemService(NotificationManager::class.java)
+        manager.createNotificationChannel(channel)
         // Selesai, keluarkan activity ini segera
         finish()
     }

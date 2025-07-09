@@ -28,8 +28,8 @@ class RunningService : Service() {
         const val EXTRA_RESULT_DATA = "MEDIA_PROJECTION_RESULT_DATA"
         const val ACTION_SCREEN   = "ACTION_SCREENSHOT"
         private const val NOTIFICATION_ID = 1
-        private const val NOTIFICATION_CHANNEL_ID = "baswara-media-projection-channel"
-        private const val NOTIFICATION_CHANNEL_SECOND = "baswara-notification-channel"
+        // Use a new notification channel ID for updated settings
+        private const val NOTIFICATION_CHANNEL_ID = "baswara-media-projection-channel-v2"
         private const val NOTIFICATION_CHANNEL_NAME = "Layanan Pindai Layar Baswara"
     }
 
@@ -58,11 +58,10 @@ class RunningService : Service() {
 
     private fun startMediaProjection(resultCode: Int, resultData: Intent) {
         createNotificationChannel()
-        // 1) PendingIntent untuk tombol “Stop”
+        // PendingIntent for Stop button
         val stopIntent = Intent(this, MainActivity::class.java).apply {
-            action = ACTION_STOP                        // atau custom action "ACTION_STOP_PROJECTION"
+            action = ACTION_STOP  // or custom action "ACTION_STOP_PROJECTION"
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            // kirim instruksi ke MainActivity
             putExtra("navigate_to", "stop_and_home")
         }
         val stopPending = PendingIntent.getActivity(
@@ -72,7 +71,7 @@ class RunningService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // 2) PendingIntent untuk tombol “Buka” (kembali ke MainActivity)
+        // PendingIntent for Open button (return to MainActivity)
         val openIntent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
@@ -82,6 +81,8 @@ class RunningService : Service() {
             openIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+
+        // PendingIntent for Scan action
         val screenIntent = Intent(this, ScreenshotProxyActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
@@ -91,24 +92,30 @@ class RunningService : Service() {
             screenIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+
         val notification = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
             .setContentTitle("Baswara")
             .setContentText("Cek Hoax Melalui Scan Layar")
             .setSmallIcon(R.drawable.logo2)
             .setOngoing(true)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .addAction(
-                R.drawable.tab,       // icon kecil untuk tombol
-                "Stop",                    // teks tombol
+                R.drawable.tab,
+                "Stop",
                 stopPending
-
-
             )
             .addAction(
                 R.drawable.home_svgrepo_com,
                 "Buka",
                 openPending
             )
-            .addAction(R.drawable.glass, "Scan", screenPending)
+            .addAction(
+                R.drawable.glass,
+                "Scan",
+                screenPending
+            )
             .build()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -130,8 +137,13 @@ class RunningService : Service() {
             val channel = NotificationChannel(
                 NOTIFICATION_CHANNEL_ID,
                 NOTIFICATION_CHANNEL_NAME,
-                NotificationManager.IMPORTANCE_LOW
+                NotificationManager.IMPORTANCE_HIGH
             )
+            channel.enableVibration(true)
+            channel.enableLights(true)
+            channel.lockscreenVisibility
+            // Uncomment and customize if you want a custom sound:
+            // channel.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION), null)
             val manager = getSystemService(NotificationManager::class.java)
             manager.createNotificationChannel(channel)
         }

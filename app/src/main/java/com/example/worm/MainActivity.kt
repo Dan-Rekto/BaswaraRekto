@@ -33,9 +33,7 @@ import androidx.fragment.app.Fragment
 import com.example.worm.HomeFragment.DahJalan
 import com.example.worm.ui.theme.RunningService.Companion.jalan
 import com.example.worm.ui.theme.RunningService
-
 import com.example.worm.HomeFragment
-import com.example.worm.ui.theme.SecondActivity
 import com.example.worm.ui.theme.WormTheme
 import com.google.android.material.navigation.NavigationView
 
@@ -181,7 +179,6 @@ class MainActivity : AppCompatActivity() {
                 .replace(R.id.container_fragment, HomeFragment())
                 .commit()
         }
-
 
         // 1. Root DrawerLayout
         drawer = DrawerLayout(this).apply { // Ubah val menjadi assignment ke property
@@ -460,7 +457,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
     override fun onDestroy() {
         super.onDestroy()
         // Remove both callbacks
