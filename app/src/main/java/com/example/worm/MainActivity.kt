@@ -360,9 +360,9 @@ class MainActivity : AppCompatActivity() {
     fun updateToolbarColor() {
         toolbar.setBackgroundColor(if (sw) Color.parseColor("#2b5f56") else Color.WHITE)
         if (sw){
-          warnabtn = Color.parseColor("#2b5f56")
+            warnabtn = Color.parseColor("#2b5f56")
         }else{
-          warnabtn = Color.WHITE
+            warnabtn = Color.WHITE
         }
     }
     fun updateToolbarColorlg() {

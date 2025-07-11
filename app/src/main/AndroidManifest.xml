@@ -5,6 +5,7 @@
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-feature
         android:name="android.hardware.camera"
         android:required="false" />
@@ -39,7 +40,7 @@
         <service
             android:name=".ui.theme.RunningService"
             android:enabled="true"
-            android:exported="false"
+            android:exported="true"
             android:foregroundServiceType="mediaProjection"
              >
         </service>
