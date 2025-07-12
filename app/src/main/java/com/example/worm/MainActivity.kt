@@ -26,6 +26,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
@@ -35,11 +36,14 @@ import com.example.worm.ui.theme.RunningService.Companion.jalan
 import com.example.worm.ui.theme.RunningService
 import com.example.worm.HomeFragment
 import com.example.worm.ui.theme.WormTheme
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.navigation.NavigationView
+import com.google.firebase.FirebaseApp
 
 var sw: Boolean = true
 var ab: Boolean = false
 var lg: Boolean = false
+var warn: Boolean = true
 var warnabtn = Color.parseColor("#2b5f56")
 class HomeFragment : Fragment(R.layout.activity_main_uji) {
     override fun onViewCreated(v: View, b: Bundle?) {
@@ -52,6 +56,12 @@ class HomeFragment : Fragment(R.layout.activity_main_uji) {
             (activity as? MainActivity)?.updateToolbarColor()
             // 3) Mulai service
             (activity as? MainActivity)?.requestScreenCapturePermission()
+            if (warn){
+                showUpdateWarning(requireContext())
+            }else if (!warn){
+                print("hi")
+            }
+
 
         }
     }
@@ -67,6 +77,20 @@ class HomeFragment : Fragment(R.layout.activity_main_uji) {
                 (activity as? MainActivity)?.stopScreenCapture()
             }
         }
+    }
+    private fun showUpdateWarning(context: Context) {
+        MaterialAlertDialogBuilder(context, R.style.ThemeOverlay_App_AlertDialog)
+            .setIcon(R.drawable.logo)
+            .setTitle("Petunjuk Baswara")
+            .setMessage("""
+      Untuk menggunakan "Scan", Tekan dulu scannya dan langsung tutup Jendela Notifikasi. Karna Aplikasi ini tidak puntya kuasa untuk langsung menutup jendela Notifikasi.
+    """.trimIndent())
+            .setNegativeButton ("Jangan Tampilkan Lagi"){ dialog, _ -> dialog.dismiss(); warn = false }
+            .setPositiveButton("Oke") { dialog, _ ->
+                // your update logic here
+                dialog.dismiss()
+            }
+            .show()
     }
 }
 
@@ -102,6 +126,26 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+    override fun onResume(){
+        super.onResume()
+        val sharedPreferences = getSharedPreferences("UserPreferences", MODE_PRIVATE)
+        val savedName = sharedPreferences.getBoolean("user_pref", warn)
+        warn.to(savedName)
+    }
+    override fun onPause() {
+        super.onPause()
+
+        // Storing data in SharedPreferences
+        val sharedPreferences = getSharedPreferences("UserPreferences", MODE_PRIVATE)
+        val editor = sharedPreferences.edit()
+
+        // Retrieving user input and saving it
+        editor.putBoolean("user_pref", warn)
+
+        editor.apply()
+    }
+
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
@@ -148,17 +192,32 @@ class MainActivity : AppCompatActivity() {
             .commit()
         updateToolbarColor()
     }
+    private fun showUpdateWarning1(context: Context) {
+        MaterialAlertDialogBuilder(context, R.style.ThemeOverlay_App_AlertDialog)
+            .setIcon(R.drawable.logo)
+            .setTitle("Petunjuk Baswara")
+            .setMessage("""
+      Untuk menggunakan "Scan", Tekan dulu scannya dan langsung tutup Jendela Notifikasi. Karna Aplikasi ini tidak puntya kuasa untuk langsung menutup jendela Notifikasi.
+    """.trimIndent())
+            .setPositiveButton("Oke") { dialog, _ ->
+                // your update logic here
+                dialog.dismiss()
+            }
+            .show()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit().clear().apply()
         sw = true
+        FirebaseApp.initializeApp(this)
         enableEdgeToEdge()
         mediaProjectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
         val newsid: String = "a895c9b8cc274495a67cdaec6922fe8c"
         val gnews: String = "bd93c4e2fcfe19b6239972ea95dd0512"
         val news: String = "13b9c989205c4629861ae9d6e3ceb728"
         val AI: String = "AIzaSyC8wJ_8GNj33Xp-pGC6vD6S0JlYB5eg07Y"
+        val quest = findViewById<Button>(R.id.question)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ActivityCompat.requestPermissions(
                 this,
@@ -170,15 +229,7 @@ class MainActivity : AppCompatActivity() {
         fun Context.dpToPx(dp: Int): Int =
             (dp * resources.displayMetrics.density).toInt()
 
-        if (RunningService.jalan){
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.container_fragment, HomeFragment.DahJalan())
-                .commit()
-        }else{
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.container_fragment, HomeFragment())
-                .commit()
-        }
+
 
         // 1. Root DrawerLayout
         drawer = DrawerLayout(this).apply { // Ubah val menjadi assignment ke property
@@ -244,6 +295,9 @@ class MainActivity : AppCompatActivity() {
 
 // 4. Tambahkan ke layout
             content.addView(btnMenu)
+            quest.setOnClickListener {
+                showUpdateWarning1(this@MainActivity)
+            }
 
             // Tambahkan padding untuk menurunkan icon
             setPadding(paddingLeft, dpToPx(18), paddingRight, paddingBottom) // 8dp padding top
@@ -464,6 +518,7 @@ class MainActivity : AppCompatActivity() {
         handler.removeCallbacks(resetBackPress1)
         stopScreenCapture()
     }
+
 }
 
 class AboutFragment : Fragment(R.layout.aboutab) {

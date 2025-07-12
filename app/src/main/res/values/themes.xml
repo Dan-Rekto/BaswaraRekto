@@ -25,4 +25,10 @@
         <item name="android:colorBackground">@android:color/black</item>
         <item name="android:textColorPrimary">@android:color/white</item>
     </style>
+
+    <style name="ThemeOverlay.App.AlertDialog" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
+        <item name="materialCircleRadius">16dp</item>
+        <item name="materialAlertDialogBodyTextStyle">@color/white</item>
+        <item name="android:divider">@null</item>
+    </style>
 </resources>
