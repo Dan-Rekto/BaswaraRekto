@@ -119,18 +119,6 @@
             app:layout_constraintTop_toTopOf="@id/mataluar"
             app:layout_constraintVertical_bias="0.32999998" /> <!-- matadalam done-->
 
-<Button
-    android:id="@+id/question"
-    android:layout_width="23dp"
-    android:layout_height="23dp"
-    android:background="@drawable/question"
-    app:layout_constraintRight_toRightOf="@id/judul"
-    android:layout_marginRight="-30dp"
-    app:layout_constraintBottom_toTopOf="@id/judul"
-    android:layout_marginBottom="-65dp"
-    android:alpha="0.7"
-    />
-
         <ImageView
             android:id="@+id/pupil"
             android:layout_width="0dp"
