@@ -36,6 +36,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".ui.theme.BlankAct"
+            android:exported="true"
+            android:label="Baswara Response"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
         <service
             android:name=".ui.theme.RunningService"
             android:enabled="true"

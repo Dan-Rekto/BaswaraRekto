@@ -1,4 +1,4 @@
-package  com.example.worm.ui.theme
+package com.example.worm.ui.theme
 
 import android.app.Activity
 import android.app.NotificationChannel
@@ -19,16 +19,18 @@ import android.media.ImageReader
 import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
 import android.os.Build
+import android.os.Bundle
 import android.os.IBinder
 import android.os.Handler
 import android.os.Looper
-import android.service.autofill.Validators.or
-import android.support.v4.app.INotificationSideChannel
 import android.util.Log
-import androidx.compose.material3.darkColorScheme
+import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.example.worm.HomeFragment
 import com.example.worm.MainActivity
+import com.example.worm.MainActivity.LogFragment.Log3
 import com.example.worm.R
 import com.example.worm.ShadeAccessibilityService.ShadeAccessibilityService
 import com.example.worm.sw
@@ -42,8 +44,10 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import org.json.JSONObject
 import java.io.IOException
 
-
+var OCRTextKeMain = "test"
+var answerTextKMain: String = "test"
 const val aikita = "AIzaSyC8wJ_8GNj33Xp-pGC6vD6S0JlYB5eg07Y"
+
 class RunningService : Service() {
     companion object {
         var jalan: Boolean = false
@@ -61,13 +65,16 @@ class RunningService : Service() {
         // Generate a unique ID for each notification
         private val idCounter = java.util.concurrent.atomic.AtomicInteger(0)
         fun nextNotifyId(): Int = idCounter.incrementAndGet()
-
     }
+
     private var mediaProjection: MediaProjection? = null
+    private var hasGenerated = false
     private lateinit var imageReader: ImageReader
     private var virtualDisplay: android.hardware.display.VirtualDisplay? = null
+    private var notificationCounter = 1
 
     override fun onBind(intent: Intent?): IBinder? = null
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         FirebaseApp.initializeApp(this)
         jalan = true
@@ -168,7 +175,13 @@ class RunningService : Service() {
         )
     }
 
+    fun sendOCR(OCR: String) {
+        var OCRText = OCR
+        OCRTextKeMain = OCR
+    }
+
     private fun handleCapture() {
+        hasGenerated = false
         Log.d("BaswaraService", "handleCapture(): using existing VirtualDisplay")
 
         // Don't recreate VirtualDisplay - just use the existing one
@@ -184,14 +197,17 @@ class RunningService : Service() {
             old.close()
         }
 
-
-
         // 3) Listen for the next available image
         imageReader.setOnImageAvailableListener({ reader ->
             // Acquire the new image
             val img = reader.acquireLatestImage() ?: return@setOnImageAvailableListener
 
             try {
+                if (hasGenerated) {
+                    // already did one generate this scan
+                    return@setOnImageAvailableListener
+                }
+                hasGenerated = true
                 // Convert to bitmap
                 val plane = img.planes[0]
                 val buffer = plane.buffer
@@ -213,7 +229,8 @@ class RunningService : Service() {
                     .process(inputImage)
                     .addOnSuccessListener { result ->
                         Log.d("BaswaraService", "OCR success: ${result.text.take(50)}")
-
+                        sendOCR(result.text)
+                        waitYa("Memproses Hasil Scan Gambar", "Memproses...")
                         val userText = result.text
                         val prompt = """
       Kamu adalah seorang AI pendeteksi hoax.
@@ -228,13 +245,12 @@ class RunningService : Service() {
 
                         generateContentManually(aikita, prompt) { result, err ->
                             val content = err?.localizedMessage ?: result ?: "No response"
-                            Log.d("BaswaraService", "OCR response: $content")
-
+                            Log.d("BaswaraService", "AI response: $content")
                         }
-
                     }
                     .addOnFailureListener { e ->
                         Log.e("BaswaraService", "OCR failed: ${e.message}")
+                        waitYa("Kesalahan karna: ${e.message.toString().take(40)}...", "Terjadi Kesalahan")
                     }
 
             } finally {
@@ -263,31 +279,72 @@ class RunningService : Service() {
         }
     }
 
-    /** Posts notifications with unique IDs so you can spam many */
-    private fun sendNotification(content: String) {
-        val id = nextNotifyId()
-        // 1. Build an Intent to your Activity
-        val fsIntent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
-                    Intent.FLAG_ACTIVITY_SINGLE_TOP
+    fun waitYa(textnya: String, isinya: String) {
+        // Build & fire the notification
+        val notif = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle(isinya)
+            .setContentText(textnya)
+            .setSmallIcon(R.drawable.logo2)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setAutoCancel(true)
+            .setTimeoutAfter(2400)
+            .build()
+
+        NotificationManagerCompat.from(this)
+            .notify(900009, notif)  // Use different notification IDs
+    }
+
+    /** Posts notifications with unique IDs and cycles through LOG 1-3 */
+    private fun sendNotification(aiResponse: String) {
+        // Full-screen intent (for heads-up)
+        val fullScreenIntent = Intent(this, MainActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
         }
-// 2. Wrap it
         val fsPending = PendingIntent.getActivity(
-            this, 0, fsIntent,
+            this, 100, fullScreenIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-// 3. In your builder, add:
+        // Tap intent: carries both the navigation command and the AI response
+        val tapIntent = Intent(this, MainActivity::class.java).apply {
+            action = Intent.ACTION_VIEW
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("navigate_to", "GO_TO_LOG1")
+        }
+        val tapPending = PendingIntent.getActivity(
+            this, 0, tapIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+// …then put tapPending into your notification’s .setContentIntent(tapPending)
+
+
+        val blankIntent = Intent(this, BlankAct::class.java).apply {
+            putExtra(BlankAct.EXTRA_TITLE, "Baswara Response")
+            putExtra(BlankAct.EXTRA_TEXT, aiResponse)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK // must have this when starting from a Service
+        }
+
+        // 2) Wrap it in a PendingIntent (unique requestCode avoids reuse)
+        val pending = PendingIntent.getActivity(
+            this,
+            0x1234,
+            blankIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        // Build & fire the notification
         val notif = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Baswara Response")
-            .setContentText(content)
+            .setContentText("${aiResponse.take(34)}... Baca Selengkapnya")
             .setSmallIcon(R.drawable.logo2)
             .setPriority(NotificationCompat.PRIORITY_MAX)
-            .setFullScreenIntent(fsPending, true)   // ← force heads-up
+            .setFullScreenIntent(tapPending, true)
+            .setContentIntent(tapPending)
+            .setAutoCancel(true)
             .build()
 
-        NotificationManagerCompat.from(this).notify(10009, notif)
+        NotificationManagerCompat.from(this)
+            .notify(100009, notif)
     }
 
     private fun createNotificationChannel() {
@@ -305,25 +362,32 @@ class RunningService : Service() {
         mediaProjection?.stop()
         jalan = false
     }
+
+    // Fixed data classes for proper JSON parsing
     data class ContentPart(
         @Json(name = "text") val text: String
     )
+
+    data class Content(
+        @Json(name = "parts") val parts: List<ContentPart>
+    )
+
     data class ContentItem(
         @Json(name = "parts") val parts: List<ContentPart>
     )
+
     data class ContentRequest(
         @Json(name = "contents") val contents: List<ContentItem>
     )
 
     data class ContentCandidate(
-        @Json(name = "output") val output: String
+        @Json(name = "content") val content: Content
     )
+
     data class ContentResponse(
         @Json(name = "candidates") val candidates: List<ContentCandidate>
     )
 
-
-    // --- Then your function becomes: ---
     fun generateContentManually(
         apiKey: String,
         userPrompt: String,
@@ -340,7 +404,7 @@ class RunningService : Service() {
 
         // HTTP call
         val request = Request.Builder()
-            .url("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$apiKey")
+            .url("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=$apiKey")
             .addHeader("Content-Type", "application/json")
             .post(body)
             .build()
@@ -360,25 +424,60 @@ class RunningService : Service() {
                     return
                 }
 
-                // Parse and return
-                val respObj = moshi.adapter(ContentResponse::class.java).fromJson(respBody)
-                val answer = respObj?.candidates?.firstOrNull()?.output
-                callback(answer, null)
+                try {
+                    // Parse using JSONObject (more reliable for this structure)
+                    val json = JSONObject(respBody)
+                    val candidates = json.getJSONArray("candidates")
 
-                val json = JSONObject(respBody)
-                val candidates = json
-                    .getJSONArray("candidates")
-                if (candidates.length() > 0) {
-                    val first = candidates.getJSONObject(0)
-                    val content = first.getJSONObject("content")
-                    val parts = content.getJSONArray("parts")
-                    if (parts.length() > 0) {
-                        val answerText = parts.getJSONObject(0).getString("text")
-                        // now send just that:
-                        sendNotification(answerText)
+                    if (candidates.length() > 0) {
+                        val first = candidates.getJSONObject(0)
+                        val content = first.getJSONObject("content")
+                        val parts = content.getJSONArray("parts")
+
+                        if (parts.length() > 0) {
+                            val answerText = parts.getJSONObject(0).getString("text")
+                            answerTextKMain = answerText
+                            sendNotification(answerText)
+                            callback(answerText, null)
+                        } else {
+                            callback(null, Exception("No parts found in response"))
+                        }
+                    } else {
+                        callback(null, Exception("No candidates found in response"))
                     }
+                } catch (e: Exception) {
+                    Log.e("BaswaraService", "JSON parsing error", e)
+                    callback(null, e)
                 }
             }
         })
+    }
+}
+
+class BlankAct : AppCompatActivity() {
+
+    companion object {
+        const val EXTRA_TITLE = "extra_title"
+        const val EXTRA_TEXT  = "extra_text"
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // point to your XML (change name if your file is different)
+        // grab the two TextViews by ID
+        val titleView = findViewById<TextView>(R.id.jdul)
+        val textView  = findViewById<TextView>(R.id.penjelasan) // assign this ID to your second TextView
+
+        // read the extras
+        val title = intent.getStringExtra(EXTRA_TITLE) ?: "Judul"
+        val text  = intent.getStringExtra(EXTRA_TEXT)  ?: "Penjelasan"
+
+        // populate
+        titleView.text = title
+        textView.text  = text
+    }
+    override fun onBackPressed() {
+        super.onBackPressed()
+        finish()
     }
 }
