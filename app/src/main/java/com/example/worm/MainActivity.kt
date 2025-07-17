@@ -60,6 +60,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContentProviderCompat.requireContext
 
 import androidx.core.content.ContextCompat
+import androidx.core.os.bundleOf
 
 import androidx.core.view.GravityCompat
 
@@ -79,6 +80,7 @@ import com.example.worm.HomeFragment
 import com.example.worm.ui.theme.OCRTextKeMain
 
 import com.example.worm.ui.theme.WormTheme
+import com.example.worm.ui.theme.answerTextKMain
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
@@ -357,11 +359,9 @@ class MainActivity : AppCompatActivity() {
 
 
     override fun onNewIntent(intent: Intent) {
-
         super.onNewIntent(intent)
 
         handleNavigationIntent(intent)
-
         if (intent.getStringExtra("navigate_to") == "GO_TO_LOG1") {
             // clear any existing back-stack
             supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
@@ -370,6 +370,7 @@ class MainActivity : AppCompatActivity() {
                 .replace(R.id.container_fragment, LogFragment.Log1())
                 .commitAllowingStateLoss()
             cameFromNotification = true
+
         }
 
     }
@@ -1205,7 +1206,11 @@ class LogFragment : Fragment(R.layout.log) {
 
 // Set the text from LogDataManager
 
-            view.findViewById<TextView>(R.id.textlog1)?.text = LogDataManager.getLogText(1)
+            view.findViewById<TextView>(R.id.jdulLOG1BL)
+                .text = answerTextKMain.take(5)  // or the answerTextKMain you stored
+
+            view.findViewById<TextView>(R.id.penjelasanLOG1BL)
+                .text = answerTextKMain
 
         }
 

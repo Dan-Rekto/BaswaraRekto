@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <TextView
-        android:id="@+id/jdul"
+        android:id="@+id/jdulLOG1BL"
         android:layout_width="323dp"
         android:layout_height="wrap_content"
         android:text="Judul"
@@ -18,7 +18,7 @@
         android:textStyle="bold"
         android:layout_marginTop="50dp"/>
     <TextView
-        android:id="@+id/penjelasan"
+        android:id="@+id/penjelasanLOG1BL"
         android:layout_width="350dp"
         android:layout_height="wrap_content"
         android:text="Penjelasan"
@@ -26,7 +26,7 @@
         android:justificationMode="inter_word"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/jdul"
+        app:layout_constraintTop_toBottomOf="@id/jdulLOG1BL"
         android:layout_marginTop="30dp"
         android:textSize="20sp"
         android:fontFamily="@font/mont"/>

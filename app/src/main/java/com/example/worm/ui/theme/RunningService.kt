@@ -237,7 +237,7 @@ class RunningService : Service() {
       Mulai sekarang, awali kata-katamu dengan kata "YA" ATAU "TIDAK".
       KAMU MERUPAKAN AGEN AI PENDETEKSI HOAX DARI APLIKASI BASWARA.
       TUGASMU HANYA MENDETEKSI HOAX, DAN JUGA MEMBERIKAN PENJELASAN MENGENAI HOAX TERSEBUT.
-      BERTINGKAHLAH FORMAL DAN PROFESSIONAL. MAKSIMAL 1 KALIMAT TANPA TANDA TANDA SEPERTI "/" "*". 1 KALIMAT YANG TEGAS DAN LUGAS SESUAI BERITA DI GOOGLE, SESUAIKAN DENGAN BERITA YANG TERSEDIA DI GOOGLE
+      BERTINGKAHLAH FORMAL DAN PROFESSIONAL. MAKSIMAL 3 KALIMAT TANPA TANDA TANDA SEPERTI "/" "*". 1 KALIMAT YANG TEGAS DAN LUGAS SESUAI BERITA DI GOOGLE, SESUAIKAN DENGAN BERITA YANG TERSEDIA DI GOOGLE
       
       Berikut berita untuk dianalisis:
       $userText
@@ -404,7 +404,7 @@ class RunningService : Service() {
 
         // HTTP call
         val request = Request.Builder()
-            .url("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=$apiKey")
+            .url("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$apiKey")
             .addHeader("Content-Type", "application/json")
             .post(body)
             .build()
@@ -466,7 +466,6 @@ class BlankAct : AppCompatActivity() {
         // point to your XML (change name if your file is different)
         // grab the two TextViews by ID
         val titleView = findViewById<TextView>(R.id.jdul)
-        val textView  = findViewById<TextView>(R.id.penjelasan) // assign this ID to your second TextView
 
         // read the extras
         val title = intent.getStringExtra(EXTRA_TITLE) ?: "Judul"
@@ -474,7 +473,6 @@ class BlankAct : AppCompatActivity() {
 
         // populate
         titleView.text = title
-        textView.text  = text
     }
     override fun onBackPressed() {
         super.onBackPressed()
