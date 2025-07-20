@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 
 import android.content.Intent
+import android.content.SharedPreferences
 
 import com.example.worm.R
 
@@ -33,14 +34,17 @@ import android.os.Looper
 import android.system.Os.remove
 
 import android.text.TextUtils.replace
+import android.util.Log
 
 import android.widget.Toast
 
 import android.widget.Button
+import android.widget.EditText
 
 import android.widget.FrameLayout
 
 import android.widget.ImageButton
+import android.widget.ImageView
 
 import android.widget.LinearLayout
 
@@ -87,12 +91,15 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.navigation.NavigationView
 
 import com.google.firebase.FirebaseApp
-
+import com.skydoves.expandablelayout.ExpandableLayout
+import com.skydoves.expandablelayout.OnExpandListener
 
 
 var sw: Boolean = true
 
 var ab: Boolean = false
+
+var sett:Boolean = false
 
 var lg: Boolean = false
 
@@ -101,6 +108,9 @@ var warn: Boolean = true
 var warnabtn = Color.parseColor("#2b5f56")
 
 var bush:Boolean = false
+
+var APIkeRunning = ""
+var ModelKeRunning = ""
 
 // Add companion object to store log texts
 
@@ -205,6 +215,7 @@ class HomeFragment : Fragment(R.layout.activity_main_uji) {
                 parentFragmentManager.beginTransaction()
 
                     .replace(R.id.container_fragment, HomeFragment())
+
 
                     .commit()
 
@@ -719,6 +730,13 @@ class MainActivity : AppCompatActivity() {
             menu.add(Menu.NONE, 2, Menu.NONE, "Tentang Kami")
 
                 .icon = ContextCompat.getDrawable(context, android.R.drawable.ic_menu_info_details)
+            menu.add(Menu.NONE, 4, Menu.NONE, "Setting")
+
+                .setIcon(R.drawable.gear_svgrepo_com)
+            menu.add(Menu.NONE, 5, Menu.NONE, "Tutorial")
+
+                .setIcon(R.drawable.question)
+
 
 
 
@@ -758,8 +776,6 @@ class MainActivity : AppCompatActivity() {
 
                             .replace(R.id.container_fragment, LogFragment())
 
-                            .addToBackStack(null)
-
                             .commit()
 
                         updateToolbarColorlg()
@@ -776,11 +792,22 @@ class MainActivity : AppCompatActivity() {
 
                             .replace(R.id.container_fragment, AboutFragment())
 
-                            .addToBackStack(null)
-
                             .commit()
 
                         updateToolbarColorab()
+
+                    }
+                    4 -> {
+                        supportFragmentManager.beginTransaction()
+
+                            .replace(R.id.container_fragment, SettingsFragment())
+
+                            .commit()
+
+                        updateToolbarColorsett()
+                        sett = false
+                    }
+                    5-> {
 
                     }
 
@@ -863,6 +890,29 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    fun updateToolbarColorsett() {
+
+        if (!sett){
+
+            toolbar.setBackgroundColor (Color.WHITE)
+
+            warnabtn = Color.WHITE
+
+        }else if (sett && sw){
+
+            toolbar.setBackgroundColor (Color.WHITE)
+
+            warnabtn = Color.WHITE
+
+        }else{
+
+            toolbar.setBackgroundColor(Color.WHITE)
+
+            warnabtn = Color.WHITE
+
+        }
+
+    }
 
 
     fun updateToolbarColorlg() {
@@ -967,6 +1017,27 @@ class MainActivity : AppCompatActivity() {
                 }
 
             }
+            is SettingsFragment -> {
+                if (sw) {
+                    sett = true
+                    supportFragmentManager.beginTransaction()
+
+                        .replace(R.id.container_fragment, HomeFragment())
+
+                        .commit()
+                    toolbar.setBackgroundColor(if (sw) Color.parseColor("#2b5f56") else Color.WHITE)
+
+                } else if (!sw){
+                    sett = true
+                    supportFragmentManager.beginTransaction()
+
+                        .replace(R.id.container_fragment, HomeFragment.DahJalan())
+
+                        .commit()
+                    toolbar.setBackgroundColor(if (sw) Color.parseColor("#2b5f56") else Color.WHITE)
+
+                }
+            }
 
             is LogFragment.Log2 -> {
 
@@ -1053,7 +1124,7 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "Jika Anda Keluar, Notifikasi Akan Mati", Toast.LENGTH_SHORT).show()
 
                 handler.postDelayed(resetBackPress1, 2000)
-                super.onBackPressed()
+
             }
 
             is HomeFragment -> {
@@ -1138,7 +1209,7 @@ class LogFragment : Fragment(R.layout.log) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
         super.onViewCreated(view, savedInstanceState)
-
+        view.findViewById<TextView>(R.id.textlog1).setText("${OCRTextKeMain.take(10)}...")
 
 // Set up click listeners for log buttons
 
@@ -1154,7 +1225,7 @@ class LogFragment : Fragment(R.layout.log) {
 
             lg = true
 
-            (activity as? MainActivity)?.updateToolbarColorlg()
+            (activity as? MainActivity)?.toolbar?.setBackgroundColor( Color.WHITE)
 
         }
 
@@ -1249,4 +1320,93 @@ class LogFragment : Fragment(R.layout.log) {
     }
 }
     }
+
+class SettingsFragment : Fragment(R.layout.setting) {
+
+    private val PREFS_NAME      = "settings_prefs"
+    private val KEY_MODEL       = "selected_model"
+    private val KEY_API_KEY     = "api_key"
+    private var selectedModel   = "gemini-1.5"
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        val prefs = requireContext()
+            .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+
+        // --- 0) load saved values ---
+        selectedModel = prefs.getString(KEY_MODEL, selectedModel) ?: selectedModel
+        val savedApiKey = prefs.getString(KEY_API_KEY, "") ?: ""
+
+        // --- API key UI wiring ---
+        val editText = view.findViewById<EditText>(R.id.editText)
+        val button   = view.findViewById<Button>(R.id.button)
+        editText.setText(savedApiKey)
+
+        button.setOnClickListener {
+            val newKey = editText.text.toString().trim()
+            APIkeRunning = newKey
+            prefs.edit()
+                .putString(KEY_API_KEY, newKey)
+                .apply()
+            Toast.makeText(requireContext(), "API key saved", Toast.LENGTH_SHORT).show()
+            Log.d("Jancok", APIkeRunning)
+        }
+
+        // --- expandable layout wiring ---
+        val expandable     = view.findViewById<ExpandableLayout>(R.id.expandableModels)
+        val parentText     = view.findViewById<TextView>(R.id.parentText)
+        val parentSpinner  = view.findViewById<ImageView>(R.id.parentSpinner)
+
+        // toggle on header tap
+        view.findViewById<View>(R.id.parentLayout).setOnClickListener {
+            expandable.toggleLayout()
+        }
+
+        // rotate arrow on expand/collapse
+        expandable.setOnExpandListener { isExpanded ->
+            parentSpinner.rotation = if (isExpanded) 180f else 0f
+        }
+
+        // wire up each choice
+        view.findViewById<TextView>(R.id.opt15).setOnClickListener {
+            onModelSelected("gemini-1.5", parentText, expandable, prefs)
+            selectedModel   = "gemini-1.5"
+        }
+        view.findViewById<TextView>(R.id.opt20lite).setOnClickListener {
+            onModelSelected("gemini-2.0-flash-lite", parentText, expandable, prefs)
+            selectedModel   = "gemini-2.0-flash-lite"
+        }
+        view.findViewById<TextView>(R.id.opt20).setOnClickListener {
+            onModelSelected("gemini-2.0", parentText, expandable, prefs)
+            selectedModel   = "gemini-2.0"
+        }
+        view.findViewById<TextView>(R.id.opt25).setOnClickListener {
+            onModelSelected("gemini-2.5-flash", parentText, expandable, prefs)
+            selectedModel   = "gemini-2.5-flash"
+        }
+
+        // initialize header text
+        parentText.text = "Model: $selectedModel"
+    }
+
+    private fun onModelSelected(
+        model: String,
+        header: TextView,
+        expandable: ExpandableLayout,
+        prefs: SharedPreferences
+    ) {
+        ModelKeRunning = selectedModel
+        // save to prefs
+        prefs.edit()
+            .putString(KEY_MODEL, selectedModel)
+            .apply()
+
+        header.text = "Model: $selectedModel"
+        expandable.collapse()
+        Toast.makeText(requireContext(), "Selected $ModelKeRunning", Toast.LENGTH_SHORT).show()
+    }
+}
+
+
+
 

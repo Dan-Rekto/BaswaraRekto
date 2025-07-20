@@ -82,13 +82,16 @@
 
         <ImageButton
             android:id="@+id/Log1"
-            android:layout_width="wrap_content"
+            android:layout_width="360dp"
             android:layout_height="wrap_content"
             android:background="@drawable/kotakgrey"
             android:layout_gravity="center"
             app:layout_constraintBottom_toBottomOf="@id/text_log_pengecekan"
             android:layout_marginBottom="-140dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
             />
+
         <TextView
             android:id="@+id/textlog1"
             android:layout_width="wrap_content"
@@ -100,46 +103,52 @@
             app:layout_constraintEnd_toEndOf="@id/Log1"
             app:layout_constraintTop_toTopOf="@id/Log1"
             app:layout_constraintBottom_toBottomOf="@id/Log1"/>
+
         <ImageButton
             android:id="@+id/Log2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/kotakgrey"
             android:layout_gravity="center"
-            app:layout_constraintBottom_toBottomOf="@id/text_log_pengecekan"
             android:layout_marginBottom="-280dp"
-            />
+            android:background="@drawable/kotakgrey"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toBottomOf="@id/text_log_pengecekan" />
+
         <TextView
             android:id="@+id/textlog2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:fontFamily="@font/mont"
             android:text="LOG1"
             android:textSize="22dp"
-            android:fontFamily="@font/mont"
-            app:layout_constraintStart_toStartOf="@id/Log2"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toBottomOf="@id/Log2"
             app:layout_constraintEnd_toEndOf="@id/Log2"
-            app:layout_constraintTop_toTopOf="@id/Log2"
-            app:layout_constraintBottom_toBottomOf="@id/Log2"/>
+            app:layout_constraintStart_toStartOf="@id/Log2"
+            app:layout_constraintTop_toTopOf="@id/Log2" />
+
         <ImageButton
             android:id="@+id/Log3"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/kotakgrey"
             android:layout_gravity="center"
-            app:layout_constraintBottom_toBottomOf="@id/text_log_pengecekan"
             android:layout_marginBottom="-420dp"
-            />
+            android:background="@drawable/kotakgrey"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toBottomOf="@id/text_log_pengecekan" />
+
         <TextView
             android:id="@+id/textlog3"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:fontFamily="@font/mont"
             android:text="LOG1"
             android:textSize="22dp"
-            android:fontFamily="@font/mont"
-            app:layout_constraintStart_toStartOf="@id/Log3"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toBottomOf="@id/Log3"
             app:layout_constraintEnd_toEndOf="@id/Log3"
-            app:layout_constraintTop_toTopOf="@id/Log3"
-            app:layout_constraintBottom_toBottomOf="@id/Log3"/>
+            app:layout_constraintStart_toStartOf="@id/Log3"
+            app:layout_constraintTop_toTopOf="@id/Log3" />
 
 
         <TextView

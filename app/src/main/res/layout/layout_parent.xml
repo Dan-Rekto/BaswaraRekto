@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/parentLayout"
+    android:layout_width="match_parent"
+    android:layout_height="48dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="8dp">
+
+    <TextView
+        android:id="@+id/parentText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Select Gemini Model"
+        android:textSize="16sp"/>
+
+    <!-- spinner drawable comes from the ExpandableLayout config -->
+    <ImageView
+        android:id="@+id/parentSpinner"
+        android:layout_width="24dp"
+        android:layout_height="24dp"/>
+</LinearLayout>

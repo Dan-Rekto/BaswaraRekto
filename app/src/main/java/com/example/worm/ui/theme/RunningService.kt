@@ -25,12 +25,15 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.example.worm.APIkeRunning
 import com.example.worm.HomeFragment
 import com.example.worm.MainActivity
 import com.example.worm.MainActivity.LogFragment.Log3
+import com.example.worm.ModelKeRunning
 import com.example.worm.R
 import com.example.worm.ShadeAccessibilityService.ShadeAccessibilityService
 import com.example.worm.sw
@@ -46,7 +49,8 @@ import java.io.IOException
 
 var OCRTextKeMain = "test"
 var answerTextKMain: String = "test"
-const val aikita = "AIzaSyC8wJ_8GNj33Xp-pGC6vD6S0JlYB5eg07Y"
+ val aikita = APIkeRunning
+val model = ModelKeRunning
 
 class RunningService : Service() {
     companion object {
@@ -89,12 +93,14 @@ class RunningService : Service() {
                     stopSelf()
                 }
             }
+
             ACTION_SCREEN -> {
                 Log.d("BaswaraService", "ACTION_SCREEN received (SCAN pressed)")
                 // Optional: expand shade via AccessibilityService
                 ShadeAccessibilityService.instance?.expandShadeViaSwipe()
                 Handler(Looper.getMainLooper()).postDelayed({ handleCapture() }, 1000)
             }
+
             ACTION_STOP -> {
                 Log.d("BaswaraService", "ACTION_STOP received")
                 stopSelf()
@@ -147,7 +153,11 @@ class RunningService : Service() {
             .addAction(R.drawable.glass, "Scan", screenPending)
             .build()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(nextNotifyId(), notif, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)
+            startForeground(
+                nextNotifyId(),
+                notif,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
+            )
         } else {
             startForeground(nextNotifyId(), notif)
         }
@@ -165,7 +175,8 @@ class RunningService : Service() {
         }, Handler(Looper.getMainLooper()))
 
         val dm = resources.displayMetrics
-        imageReader = ImageReader.newInstance(dm.widthPixels, dm.heightPixels, PixelFormat.RGBA_8888, 2)
+        imageReader =
+            ImageReader.newInstance(dm.widthPixels, dm.heightPixels, PixelFormat.RGBA_8888, 2)
 
         // Create VirtualDisplay ONCE and keep it
         virtualDisplay = mediaProjection?.createVirtualDisplay(
@@ -230,7 +241,8 @@ class RunningService : Service() {
                     .addOnSuccessListener { result ->
                         Log.d("BaswaraService", "OCR success: ${result.text.take(50)}")
                         sendOCR(result.text)
-                        waitYa("Memproses Hasil Scan Gambar", "Memproses...")
+                        toast("Memproses Hasil Scan Gambar")
+                        OCRTextKeMain = result.text
                         val userText = result.text
                         val prompt = """
       Kamu adalah seorang AI pendeteksi hoax.
@@ -243,14 +255,28 @@ class RunningService : Service() {
       $userText
     """.trimIndent()
 
-                        generateContentManually(aikita, prompt) { result, err ->
+
+                        generateContentManually(prompt) { result, err ->
                             val content = err?.localizedMessage ?: result ?: "No response"
                             Log.d("BaswaraService", "AI response: $content")
+
+                            // If you still want to verify which API key it grabbed:
+                            val prefs = getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
+                            Log.d(
+                                "Jancok",
+                                "API key in use = ${prefs.getString("api_key", "<none>")}"
+
+                            )
+                            Log.d(
+                                "Jancok",
+                                "API key in use = ${prefs.getString("selected_model", "<none>")}")
                         }
+
+
                     }
                     .addOnFailureListener { e ->
                         Log.e("BaswaraService", "OCR failed: ${e.message}")
-                        waitYa("Kesalahan karna: ${e.message.toString().take(40)}...", "Terjadi Kesalahan")
+                        toast("Terjadi Kesalahan")
                     }
 
             } finally {
@@ -276,6 +302,12 @@ class RunningService : Service() {
                 Log.e("BaswaraService", "MediaProjection gone, cannot recapture")
                 return
             }
+        }
+    }
+
+    fun toast(textnya: String) {
+        Handler(Looper.getMainLooper()).post {
+            Toast.makeText(this, textnya, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -315,24 +347,7 @@ class RunningService : Service() {
             this, 0, tapIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-// …then put tapPending into your notification’s .setContentIntent(tapPending)
 
-
-        val blankIntent = Intent(this, BlankAct::class.java).apply {
-            putExtra(BlankAct.EXTRA_TITLE, "Baswara Response")
-            putExtra(BlankAct.EXTRA_TEXT, aiResponse)
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK // must have this when starting from a Service
-        }
-
-        // 2) Wrap it in a PendingIntent (unique requestCode avoids reuse)
-        val pending = PendingIntent.getActivity(
-            this,
-            0x1234,
-            blankIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        // Build & fire the notification
         val notif = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Baswara Response")
             .setContentText("${aiResponse.take(34)}... Baca Selengkapnya")
@@ -349,7 +364,8 @@ class RunningService : Service() {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val chan = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH)
+            val chan =
+                NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH)
             chan.enableVibration(true)
             getSystemService(NotificationManager::class.java)
                 .createNotificationChannel(chan)
@@ -389,26 +405,33 @@ class RunningService : Service() {
     )
 
     fun generateContentManually(
-        apiKey: String,
         userPrompt: String,
         callback: (String?, Exception?) -> Unit
     ) {
-        val moshi = Moshi.Builder().build()
+        // 1) Read the current settings at call-time
+        val prefs = getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
+        val apiKey = prefs.getString("api_key", "") ?: ""
+        val model = prefs.getString("selected_model", "gemini-1.5") ?: "gemini-1.5"
 
-        // Build request
+        // 2) Build your request body exactly as before
         val reqObj = ContentRequest(
             contents = listOf(ContentItem(parts = listOf(ContentPart(userPrompt))))
         )
-        val json = moshi.adapter(ContentRequest::class.java).toJson(reqObj)
-        val body = json.toRequestBody("application/json; charset=utf-8".toMediaType())
+        val jsonBody = Moshi.Builder().build()
+            .adapter(ContentRequest::class.java)
+            .toJson(reqObj)
+        val body = jsonBody.toRequestBody("application/json; charset=utf-8".toMediaType())
 
-        // HTTP call
+        // 3) Point at the correct endpoint with the fresh values
+        val url =
+            "https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$apiKey"
         val request = Request.Builder()
-            .url("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$apiKey")
+            .url(url)
             .addHeader("Content-Type", "application/json")
             .post(body)
             .build()
 
+        // 4) Enqueue exactly as you had it
         OkHttpClient().newCall(request).enqueue(object : okhttp3.Callback {
             override fun onFailure(call: okhttp3.Call, e: IOException) {
                 Log.e("BaswaraService", "HTTP failure", e)
@@ -417,33 +440,25 @@ class RunningService : Service() {
 
             override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
                 val respBody = response.body?.string().orEmpty()
-                Log.d("BaswaraService", "HTTP ${response.code}: $respBody")
-
                 if (!response.isSuccessful) {
                     callback(null, Exception("HTTP ${response.code}: ${response.message}"))
                     return
                 }
-
                 try {
-                    // Parse using JSONObject (more reliable for this structure)
                     val json = JSONObject(respBody)
                     val candidates = json.getJSONArray("candidates")
-
                     if (candidates.length() > 0) {
-                        val first = candidates.getJSONObject(0)
-                        val content = first.getJSONObject("content")
-                        val parts = content.getJSONArray("parts")
-
-                        if (parts.length() > 0) {
-                            val answerText = parts.getJSONObject(0).getString("text")
-                            answerTextKMain = answerText
-                            sendNotification(answerText)
-                            callback(answerText, null)
-                        } else {
-                            callback(null, Exception("No parts found in response"))
-                        }
+                        val answer = candidates
+                            .getJSONObject(0)
+                            .getJSONObject("content")
+                            .getJSONArray("parts")
+                            .getJSONObject(0)
+                            .getString("text")
+                        callback(answer, null)
+                        sendNotification(answer)
+                        answerTextKMain = answer
                     } else {
-                        callback(null, Exception("No candidates found in response"))
+                        callback(null, Exception("No candidates found"))
                     }
                 } catch (e: Exception) {
                     Log.e("BaswaraService", "JSON parsing error", e)
@@ -452,30 +467,5 @@ class RunningService : Service() {
             }
         })
     }
-}
 
-class BlankAct : AppCompatActivity() {
-
-    companion object {
-        const val EXTRA_TITLE = "extra_title"
-        const val EXTRA_TEXT  = "extra_text"
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        // point to your XML (change name if your file is different)
-        // grab the two TextViews by ID
-        val titleView = findViewById<TextView>(R.id.jdul)
-
-        // read the extras
-        val title = intent.getStringExtra(EXTRA_TITLE) ?: "Judul"
-        val text  = intent.getStringExtra(EXTRA_TEXT)  ?: "Penjelasan"
-
-        // populate
-        titleView.text = title
-    }
-    override fun onBackPressed() {
-        super.onBackPressed()
-        finish()
-    }
 }
