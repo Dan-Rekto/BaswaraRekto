@@ -1,5 +1,9 @@
 package com.example.worm.ui.theme
-
+import android.net.Uri
+import android.provider.MediaStore
+import androidx.core.content.ContextCompat
+import java.io.File
+import java.io.FileOutputStream
 import android.app.Activity
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -25,15 +29,12 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.example.worm.APIkeRunning
 import com.example.worm.HomeFragment
 import com.example.worm.MainActivity
 import com.example.worm.MainActivity.LogFragment.Log3
-import com.example.worm.ModelKeRunning
 import com.example.worm.R
 import com.example.worm.ShadeAccessibilityService.ShadeAccessibilityService
 import com.example.worm.sw
@@ -47,10 +48,21 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import org.json.JSONObject
 import java.io.IOException
 
+import android.content.BroadcastReceiver // Tambahkan import ini
+import android.content.IntentFilter // Tambahkan import ini
+import android.graphics.Rect // Tambahkan import ini
+import android.service.autofill.Validators.or
+import com.example.worm.ui.theme.CropStarterActivity // Tambahkan import ini
+import androidx.core.content.FileProvider
+import com.example.worm.APIkeRunning
+import com.example.worm.ModelKeRunning
+import kotlinx.coroutines.delay
+
+
 var OCRTextKeMain = "test"
 var answerTextKMain: String = "test"
- val aikita = APIkeRunning
-val model = ModelKeRunning
+var aikita = APIkeRunning
+var modell = ModelKeRunning
 
 class RunningService : Service() {
     companion object {
@@ -58,6 +70,7 @@ class RunningService : Service() {
         const val ACTION_START = "ACTION_START_PROJECTION"
         const val ACTION_STOP = "stop_and_home"
         const val ACTION_SCREEN = "ACTION_SCREENSHOT"
+        const val ACTION_CROP_SUCCESS = "ACTION_CROP_SUCCESS" // Aksi baru
 
         const val EXTRA_RESULT_CODE = "MEDIA_PROJECTION_RESULT_CODE"
         const val EXTRA_RESULT_DATA = "MEDIA_PROJECTION_RESULT_DATA"
@@ -76,10 +89,33 @@ class RunningService : Service() {
     private lateinit var imageReader: ImageReader
     private var virtualDisplay: android.hardware.display.VirtualDisplay? = null
     private var notificationCounter = 1
+    private var cropReceiver: BroadcastReceiver? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    override fun onCreate() {
+        super.onCreate()
+        cropReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                if (intent?.action == ACTION_CROP_SUCCESS) {
+                    val croppedUri = intent.data
+                    if (croppedUri != null) {
+                        processCroppedImage(croppedUri)
+                    }
+                }
+            }
+        }
+        ContextCompat.registerReceiver(
+            this,
+            cropReceiver,
+            IntentFilter(ACTION_CROP_SUCCESS),
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
+    }
+
+
+
+    override fun onStartCommand(intent: Intent?, flagss: Int, startId: Int): Int {
         FirebaseApp.initializeApp(this)
         jalan = true
         when (intent?.action) {
@@ -93,14 +129,27 @@ class RunningService : Service() {
                     stopSelf()
                 }
             }
-
             ACTION_SCREEN -> {
-                Log.d("BaswaraService", "ACTION_SCREEN received (SCAN pressed)")
-                // Optional: expand shade via AccessibilityService
-                ShadeAccessibilityService.instance?.expandShadeViaSwipe()
-                Handler(Looper.getMainLooper()).postDelayed({ handleCapture() }, 1000)
-            }
+                Log.d("BaswaraService", "ACTION_SCREEN diterima, menunggu 1 detik...")
 
+                // --- TAMBAHAN BARU: JEDA 1 DETIK ---
+                Handler(Looper.getMainLooper()).postDelayed({
+                    Log.d("BaswaraService", "Jeda selesai, memulai proses capture.")
+                    handleCaptureAndStartCrop()
+                }, 1000) // 1000 milidetik
+
+                Handler(Looper.getMainLooper()).postDelayed({
+                    Log.d("BaswaraService", "Dast ist skibiditoilet()")
+                    skibiditoilet()
+                }, 1000) // 1000 milidetik
+            }
+            ACTION_CROP_SUCCESS -> {
+                Log.d("BaswaraService", "ACTION_CROP_SUCCESS diterima.")
+                val croppedUri = intent.data
+                if (croppedUri != null) {
+                    processCroppedImage(croppedUri)
+                }
+            }
             ACTION_STOP -> {
                 Log.d("BaswaraService", "ACTION_STOP received")
                 stopSelf()
@@ -131,15 +180,20 @@ class RunningService : Service() {
                     Intent.FLAG_ACTIVITY_CLEAR_TOP or
                     Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
+
         val openPending = PendingIntent.getActivity(
             this, 1, openIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        val screenPending = PendingIntent.getService(
-            this, 2,
-            Intent(this, RunningService::class.java).apply { action = ACTION_SCREEN },
+
+        val scanIntent = Intent(this, RunningService::class.java).apply {
+            action = ACTION_SCREEN
+        }
+        val scanPending = PendingIntent.getService(
+            this, 2, scanIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+
 
         // Foreground notification
         val notif = NotificationCompat.Builder(this, CHANNEL_ID)
@@ -150,14 +204,10 @@ class RunningService : Service() {
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .addAction(R.drawable.tab, "Stop", stopPending)
             .addAction(R.drawable.home_svgrepo_com, "Buka", openPending)
-            .addAction(R.drawable.glass, "Scan", screenPending)
+            .addAction(R.drawable.glass, "Scan", scanPending)
             .build()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(
-                nextNotifyId(),
-                notif,
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
-            )
+            startForeground(nextNotifyId(), notif, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)
         } else {
             startForeground(nextNotifyId(), notif)
         }
@@ -175,8 +225,7 @@ class RunningService : Service() {
         }, Handler(Looper.getMainLooper()))
 
         val dm = resources.displayMetrics
-        imageReader =
-            ImageReader.newInstance(dm.widthPixels, dm.heightPixels, PixelFormat.RGBA_8888, 2)
+        imageReader = ImageReader.newInstance(dm.widthPixels, dm.heightPixels, PixelFormat.RGBA_8888, 2)
 
         // Create VirtualDisplay ONCE and keep it
         virtualDisplay = mediaProjection?.createVirtualDisplay(
@@ -190,124 +239,142 @@ class RunningService : Service() {
         var OCRText = OCR
         OCRTextKeMain = OCR
     }
+    fun skibiditoilet(){
+        Handler(Looper.getMainLooper()).postDelayed({
+            Log.d("BaswaraService", "OTW Superman")
+            Intent(this, MainActivity::class.java).apply {
+                action = Intent.ACTION_VIEW
+                putExtra("navigate_to", ACTION_SCREEN)
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            }.let { frontIntent ->
+                PendingIntent.getActivity(
+                    this, 42, frontIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                ).send()
+            }
+        }, 3300) // 1000 milidetik
 
-    private fun handleCapture() {
-        hasGenerated = false
-        Log.d("BaswaraService", "handleCapture(): using existing VirtualDisplay")
+    }
 
-        // Don't recreate VirtualDisplay - just use the existing one
-        if (virtualDisplay == null) {
-            Log.e("BaswaraService", "VirtualDisplay is null, cannot capture")
+    private fun handleCaptureAndStartCrop() {
+        val img = imageReader.acquireLatestImage()
+        if (img == null) {
+            Log.e("BaswaraService", "Gagal mengambil gambar dari layar.")
             return
         }
 
-        // Clear old frames
-        while (true) {
-            val old = imageReader.acquireLatestImage()
-                ?: break
-            old.close()
-        }
+        try {
+            val plane = img.planes[0]
+            val buffer = plane.buffer
+            val pixelStride = plane.pixelStride
+            val rowStride = plane.rowStride
+            val dm = resources.displayMetrics
+            val rowPadding = rowStride - pixelStride * dm.widthPixels
 
-        // 3) Listen for the next available image
-        imageReader.setOnImageAvailableListener({ reader ->
-            // Acquire the new image
-            val img = reader.acquireLatestImage() ?: return@setOnImageAvailableListener
+            val fullBitmap = Bitmap.createBitmap(
+                dm.widthPixels + rowPadding / pixelStride,
+                dm.heightPixels,
+                Bitmap.Config.ARGB_8888
+            )
+            fullBitmap.copyPixelsFromBuffer(buffer)
 
-            try {
-                if (hasGenerated) {
-                    // already did one generate this scan
-                    return@setOnImageAvailableListener
+            val scaleFactor = 0.7f
+            val scaledWidth = (fullBitmap.width * scaleFactor).toInt()
+            val scaledHeight = (fullBitmap.height * scaleFactor).toInt()
+            val scaledBitmap = Bitmap.createScaledBitmap(fullBitmap, scaledWidth, scaledHeight, true)
+
+            val tempFile = File(cacheDir, "screenshot_for_crop.png")
+            FileOutputStream(tempFile).use { out ->
+                scaledBitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+            }
+            val sourceUri = FileProvider.getUriForFile(
+                this,
+                "${packageName}.provider",
+                tempFile)
+
+            val cropIntent = Intent(this, CropStarterActivity::class.java).apply {
+                data = sourceUri
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            val cropPendingIntent = PendingIntent.getActivity(
+                this, 3, cropIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val cropNotif = NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle("Screenshot Ready!")
+                .setContentText("Tap to crop your screenshot")
+                .setSmallIcon(R.drawable.logo2)
+                .setContentIntent(cropPendingIntent)
+                .setAutoCancel(true)
+                .build()
+
+            NotificationManagerCompat.from(this).notify(200009, cropNotif)
+
+
+            ShadeAccessibilityService.instance?.expandShadeViaSwipe()
+
+            Handler(Looper.getMainLooper()).postDelayed({
+                val cropIntent = Intent(this, CropStarterActivity::class.java).apply {
+                    data = sourceUri
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
-                hasGenerated = true
-                // Convert to bitmap
-                val plane = img.planes[0]
-                val buffer = plane.buffer
-                val pixelStride = plane.pixelStride
-                val rowStride = plane.rowStride
-                val dm = resources.displayMetrics
-                val rowPadding = rowStride - pixelStride * dm.widthPixels
 
-                val bitmap = Bitmap.createBitmap(
-                    dm.widthPixels + rowPadding / pixelStride,
-                    dm.heightPixels,
-                    Bitmap.Config.ARGB_8888
+                grantUriPermission(
+                    "com.canhub.cropper",
+                    sourceUri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
                 )
-                bitmap.copyPixelsFromBuffer(buffer)
 
-                // OCR processing
-                val inputImage = InputImage.fromBitmap(bitmap, 0)
-                TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-                    .process(inputImage)
-                    .addOnSuccessListener { result ->
-                        Log.d("BaswaraService", "OCR success: ${result.text.take(50)}")
-                        sendOCR(result.text)
-                        toast("Memproses Hasil Scan Gambar")
-                        OCRTextKeMain = result.text
-                        val userText = result.text
-                        val prompt = """
+                startActivity(cropIntent)
+            }, 500)
+
+        } catch (e: Exception) {
+            Log.e("BaswaraService", "Error saat menangkap & menyimpan screenshot", e)
+        } finally {
+            img.close()
+        }
+    }
+
+
+    private fun processCroppedImage(croppedUri: Uri) {
+        try {
+            val bitmap = MediaStore.Images.Media.getBitmap(this.contentResolver, croppedUri)
+
+            // Di sini kita gunakan logika OCR dari fungsi handleCapture() lama Anda
+            val inputImage = InputImage.fromBitmap(bitmap, 0)
+            TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+                .process(inputImage)
+                .addOnSuccessListener { result ->
+                    Log.d("BaswaraService", "OCR success: ${result.text.take(50)}")
+                    sendOCR(result.text)
+                    waitYa("Memproses Hasil Scan Gambar", "Memproses...")
+                    val userText = result.text
+                    val prompt = """
       Kamu adalah seorang AI pendeteksi hoax.
-      Mulai sekarang, awali kata-katamu dengan kata "YA" ATAU "TIDAK".
+      Mulai sekarang, awali kata-katamu dengan kata "FAKTA✅", "HOAKS❌", "TIDAK DIKETAHUI".
       KAMU MERUPAKAN AGEN AI PENDETEKSI HOAX DARI APLIKASI BASWARA.
-      TUGASMU HANYA MENDETEKSI HOAX, DAN JUGA MEMBERIKAN PENJELASAN MENGENAI HOAX TERSEBUT.
-      BERTINGKAHLAH FORMAL DAN PROFESSIONAL. MAKSIMAL 3 KALIMAT TANPA TANDA TANDA SEPERTI "/" "*". 1 KALIMAT YANG TEGAS DAN LUGAS SESUAI BERITA DI GOOGLE, SESUAIKAN DENGAN BERITA YANG TERSEDIA DI GOOGLE
+      TUGASMU HANYA MENDETEKSI HOAX, DAN JUGA MEMBERIKAN PENJELASAN MENGENAI HOAX TERSEBUT. CARILAH INFORMASI DI GOOGLE DAN BERI TAHU KE PENGGUNA MENGAPA INFORMASI INI PALSU ATAUPUN ASLI.
+      BERTINGKAHLAH FORMAL DAN PROFESSIONAL. MAKSIMAL 3 KALIMAT TANPA TANDA TANDA SEPERTI "/" "*". 1 KALIMAT YANG TEGAS DAN LUGAS SESUAI BERITA DI GOOGLE, SESUAIKAN DENGAN BERITA YANG TERSEDIA DI GOOGLE, UTAMAKAN KEEBENARAN DIBANDING SUBJEKTIVITAS
       
       Berikut berita untuk dianalisis:
       $userText
     """.trimIndent()
 
-
-                        generateContentManually(prompt) { result, err ->
-                            val content = err?.localizedMessage ?: result ?: "No response"
-                            Log.d("BaswaraService", "AI response: $content")
-
-                            // If you still want to verify which API key it grabbed:
-                            val prefs = getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
-                            Log.d(
-                                "Jancok",
-                                "API key in use = ${prefs.getString("api_key", "<none>")}"
-
-                            )
-                            Log.d(
-                                "Jancok",
-                                "API key in use = ${prefs.getString("selected_model", "<none>")}")
-                        }
-
+                    generateContentManually(aikita, prompt) { result, err ->
+                        val content = err?.localizedMessage ?: result ?: "No response"
+                        Log.d("BaswaraService", "AI response: $content")
 
                     }
-                    .addOnFailureListener { e ->
-                        Log.e("BaswaraService", "OCR failed: ${e.message}")
-                        toast("Terjadi Kesalahan")
-                    }
-
-            } finally {
-                // 4) Always close the image when done
-                img.close()
-                // 5) Stop listening to avoid repeated calls
-                reader.setOnImageAvailableListener(null, null)
-            }
-        }, Handler(Looper.getMainLooper()))
-
-        // 0) If we've lost the display, rebuild it
-        if (virtualDisplay == null) {
-            mediaProjection?.let { mp ->
-                val dm = resources.displayMetrics
-                virtualDisplay = mp.createVirtualDisplay(
-                    "RunningServiceCapture",
-                    dm.widthPixels, dm.heightPixels, dm.densityDpi,
-                    DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
-                    imageReader.surface, null, Handler(Looper.getMainLooper())
-                )
-                Log.d("BaswaraService", "Re-created VirtualDisplay for capture")
-            } ?: run {
-                Log.e("BaswaraService", "MediaProjection gone, cannot recapture")
-                return
-            }
-        }
-    }
-
-    fun toast(textnya: String) {
-        Handler(Looper.getMainLooper()).post {
-            Toast.makeText(this, textnya, Toast.LENGTH_SHORT).show()
+                }
+                .addOnFailureListener { e ->
+                    Log.e("BaswaraService", "OCR failed: ${e.message}")
+                    waitYa("Kesalahan karna: ${e.message.toString().take(40)}...", "Terjadi Kesalahan")
+                }
+        } catch (e: IOException) {
+            Log.e("BaswaraService", "Gagal mengubah URI hasil crop menjadi Bitmap", e)
         }
     }
 
@@ -348,6 +415,7 @@ class RunningService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        // Build & fire the notification
         val notif = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Baswara Response")
             .setContentText("${aiResponse.take(34)}... Baca Selengkapnya")
@@ -364,8 +432,7 @@ class RunningService : Service() {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val chan =
-                NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH)
+            val chan = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH)
             chan.enableVibration(true)
             getSystemService(NotificationManager::class.java)
                 .createNotificationChannel(chan)
@@ -374,6 +441,10 @@ class RunningService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        if (cropReceiver != null) {
+            unregisterReceiver(cropReceiver)
+        }
+
         virtualDisplay?.release()
         mediaProjection?.stop()
         jalan = false
@@ -405,33 +476,26 @@ class RunningService : Service() {
     )
 
     fun generateContentManually(
+        apiKey: String,
         userPrompt: String,
         callback: (String?, Exception?) -> Unit
     ) {
-        // 1) Read the current settings at call-time
-        val prefs = getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
-        val apiKey = prefs.getString("api_key", "") ?: ""
-        val model = prefs.getString("selected_model", "gemini-1.5") ?: "gemini-1.5"
+        val moshi = Moshi.Builder().build()
 
-        // 2) Build your request body exactly as before
+        // Build request
         val reqObj = ContentRequest(
             contents = listOf(ContentItem(parts = listOf(ContentPart(userPrompt))))
         )
-        val jsonBody = Moshi.Builder().build()
-            .adapter(ContentRequest::class.java)
-            .toJson(reqObj)
-        val body = jsonBody.toRequestBody("application/json; charset=utf-8".toMediaType())
+        val json = moshi.adapter(ContentRequest::class.java).toJson(reqObj)
+        val body = json.toRequestBody("application/json; charset=utf-8".toMediaType())
 
-        // 3) Point at the correct endpoint with the fresh values
-        val url =
-            "https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$apiKey"
+        // HTTP call
         val request = Request.Builder()
-            .url(url)
+            .url("https://generativelanguage.googleapis.com/v1beta/models/$modell:generateContent?key=$apiKey")
             .addHeader("Content-Type", "application/json")
             .post(body)
             .build()
 
-        // 4) Enqueue exactly as you had it
         OkHttpClient().newCall(request).enqueue(object : okhttp3.Callback {
             override fun onFailure(call: okhttp3.Call, e: IOException) {
                 Log.e("BaswaraService", "HTTP failure", e)
@@ -440,25 +504,33 @@ class RunningService : Service() {
 
             override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
                 val respBody = response.body?.string().orEmpty()
+                Log.d("BaswaraService", "HTTP ${response.code}: $respBody")
+
                 if (!response.isSuccessful) {
                     callback(null, Exception("HTTP ${response.code}: ${response.message}"))
                     return
                 }
+
                 try {
+                    // Parse using JSONObject (more reliable for this structure)
                     val json = JSONObject(respBody)
                     val candidates = json.getJSONArray("candidates")
+
                     if (candidates.length() > 0) {
-                        val answer = candidates
-                            .getJSONObject(0)
-                            .getJSONObject("content")
-                            .getJSONArray("parts")
-                            .getJSONObject(0)
-                            .getString("text")
-                        callback(answer, null)
-                        sendNotification(answer)
-                        answerTextKMain = answer
+                        val first = candidates.getJSONObject(0)
+                        val content = first.getJSONObject("content")
+                        val parts = content.getJSONArray("parts")
+
+                        if (parts.length() > 0) {
+                            val answerText = parts.getJSONObject(0).getString("text")
+                            answerTextKMain = answerText
+                            sendNotification(answerText)
+                            callback(answerText, null)
+                        } else {
+                            callback(null, Exception("No parts found in response"))
+                        }
                     } else {
-                        callback(null, Exception("No candidates found"))
+                        callback(null, Exception("No candidates found in response"))
                     }
                 } catch (e: Exception) {
                     Log.e("BaswaraService", "JSON parsing error", e)
@@ -467,5 +539,4 @@ class RunningService : Service() {
             }
         })
     }
-
 }

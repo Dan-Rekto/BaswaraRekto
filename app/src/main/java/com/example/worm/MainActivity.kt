@@ -373,15 +373,28 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
 
         handleNavigationIntent(intent)
-        if (intent.getStringExtra("navigate_to") == "GO_TO_LOG1") {
-            // clear any existing back-stack
-            supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-            // show Log1
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.container_fragment, LogFragment.Log1())
-                .commitAllowingStateLoss()
-            cameFromNotification = true
+        when (intent.getStringExtra("navigate_to")) {
+            RunningService.ACTION_SCREEN -> {
+                val scanSvc = Intent(this, RunningService::class.java).apply {
+                    action = RunningService.ACTION_SCREEN
+                }
+                // for Android O+ use startForegroundService
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        ContextCompat.startForegroundService(this, scanSvc)
 
+                } else {
+                    startService(scanSvc)
+                }
+            }
+
+            "GO_TO_LOG1" -> {
+                // your existing LOG1 handling
+                supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.container_fragment, LogFragment.Log1())
+                    .commitAllowingStateLoss()
+                cameFromNotification = true
+            }
         }
 
     }
