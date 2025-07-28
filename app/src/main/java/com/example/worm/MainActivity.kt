@@ -111,6 +111,7 @@ var bush:Boolean = false
 
 var APIkeRunning = ""
 var ModelKeRunning = ""
+var stopit:Boolean = false
 
 // Add companion object to store log texts
 
@@ -222,6 +223,7 @@ class HomeFragment : Fragment(R.layout.activity_main_uji) {
                 (activity as? MainActivity)?.updateToolbarColor()
 
                 (activity as? MainActivity)?.stopScreenCapture()
+
 
             }
 
@@ -388,12 +390,20 @@ class MainActivity : AppCompatActivity() {
             }
 
             "GO_TO_LOG1" -> {
-                // your existing LOG1 handling
-                supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
                 supportFragmentManager.beginTransaction()
                     .replace(R.id.container_fragment, LogFragment.Log1())
                     .commitAllowingStateLoss()
                 cameFromNotification = true
+            }
+        }
+        when (intent.getStringExtra("mbot")) {
+            "langsung" -> {
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.container_fragment, LogFragment.Log1())
+                    .addToBackStack(null)
+                    .commitAllowingStateLoss()
+                cameFromNotification = true
+                updateToolbarColor()
             }
         }
 
@@ -986,19 +996,7 @@ class MainActivity : AppCompatActivity() {
 
 
         val currentFragment = supportFragmentManager.findFragmentById(R.id.container_fragment)
-        if (current is LogFragment.Log1 && cameFromNotification) {
-            // go back home
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.container_fragment, HomeFragment.DahJalan())
-                .commit()
 
-            updateToolbarColor()
-            cameFromNotification = false
-            sw = false
-            Toast.makeText(this, "Lanjutkan Kegiatan Anda!", Toast.LENGTH_SHORT).show()
-            moveTaskToBack(true)
-            return
-        }
 
         when (current) {
 
@@ -1051,35 +1049,6 @@ class MainActivity : AppCompatActivity() {
 
                 }
             }
-
-            is LogFragment.Log2 -> {
-
-                lg = true
-
-                supportFragmentManager.beginTransaction()
-
-                    .replace(R.id.container_fragment, LogFragment())
-
-                    .commit()
-
-                updateToolbarColorlg()
-
-            }
-
-            is LogFragment.Log3 -> {
-
-                lg = true
-
-                supportFragmentManager.beginTransaction()
-
-                    .replace(R.id.container_fragment, LogFragment())
-
-                    .commit()
-
-                updateToolbarColorlg()
-
-            }
-
 
 
             is AboutFragment -> {
@@ -1281,24 +1250,38 @@ class LogFragment : Fragment(R.layout.log) {
     }
 
 
+
     class Log1 : Fragment(R.layout.log1) {
-
         override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-
             super.onViewCreated(view, savedInstanceState)
 
-
-// Set the text from LogDataManager
-
+            // Populate your views
             view.findViewById<TextView>(R.id.jdulLOG1BL)
-                .text = answerTextKMain.take(5)  // or the answerTextKMain you stored
-
+                .text = answerTextKMain.take(6)
             view.findViewById<TextView>(R.id.penjelasanLOG1BL)
                 .text = answerTextKMain
 
-        }
+            // === BACK PRESS HANDLER FOR *THIS* FRAGMENT ===
+            requireActivity()
+                .onBackPressedDispatcher
+                .addCallback(viewLifecycleOwner, object : OnBackPressedCallback(true) {
+                    override fun handleOnBackPressed() {
+                        // Redirect to DahJalan (always, regardless of cameFromNotification)
+                        parentFragmentManager.beginTransaction()
+                            .replace(R.id.container_fragment, HomeFragment.DahJalan())
+                            .commitAllowingStateLoss()
 
+                        // Update the toolbar color via your activity
+                        (activity as? MainActivity)?.updateToolbarColor()
+
+                        // Clear any flags if needed
+                        (activity as? MainActivity)?.cameFromNotification = false
+                        sw = false
+                    }
+                })
+        }
     }
+}
 
 
     class Log2 : Fragment(R.layout.log2) {
@@ -1332,7 +1315,7 @@ class LogFragment : Fragment(R.layout.log) {
 
     }
 }
-    }
+
 
 class SettingsFragment : Fragment(R.layout.setting) {
 

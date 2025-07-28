@@ -34,7 +34,6 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.example.worm.HomeFragment
 import com.example.worm.MainActivity
-import com.example.worm.MainActivity.LogFragment.Log3
 import com.example.worm.R
 import com.example.worm.ShadeAccessibilityService.ShadeAccessibilityService
 import com.example.worm.sw
@@ -59,9 +58,10 @@ import com.example.worm.ModelKeRunning
 import kotlinx.coroutines.delay
 
 
+
 var OCRTextKeMain = "test"
 var answerTextKMain: String = "test"
-var aikita = APIkeRunning
+var aikita = "AIzaSyD9-22266oY87yo8Fvwid64EoPxOZyfzis"
 var modell = ModelKeRunning
 
 class RunningService : Service() {
@@ -71,7 +71,7 @@ class RunningService : Service() {
         const val ACTION_STOP = "stop_and_home"
         const val ACTION_SCREEN = "ACTION_SCREENSHOT"
         const val ACTION_CROP_SUCCESS = "ACTION_CROP_SUCCESS" // Aksi baru
-
+        const val ACTION_CROP_CANCEL = "ACTION_CROP_CANCEL" // Aksi baru
         const val EXTRA_RESULT_CODE = "MEDIA_PROJECTION_RESULT_CODE"
         const val EXTRA_RESULT_DATA = "MEDIA_PROJECTION_RESULT_DATA"
 
@@ -90,7 +90,7 @@ class RunningService : Service() {
     private var virtualDisplay: android.hardware.display.VirtualDisplay? = null
     private var notificationCounter = 1
     private var cropReceiver: BroadcastReceiver? = null
-
+    private var isCapturing = false
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
@@ -102,13 +102,20 @@ class RunningService : Service() {
                     if (croppedUri != null) {
                         processCroppedImage(croppedUri)
                     }
+                }else if (intent?.action == ACTION_CROP_CANCEL) {
+                    Log.d("BaswaraService", "ACTION_CROP_CANCEL received.")
+
                 }
             }
+        }
+        val intentFilter = IntentFilter().apply {
+            addAction(ACTION_CROP_SUCCESS)
+            addAction(ACTION_CROP_CANCEL)
         }
         ContextCompat.registerReceiver(
             this,
             cropReceiver,
-            IntentFilter(ACTION_CROP_SUCCESS),
+            intentFilter,
             ContextCompat.RECEIVER_NOT_EXPORTED
         )
     }
@@ -133,15 +140,13 @@ class RunningService : Service() {
                 Log.d("BaswaraService", "ACTION_SCREEN diterima, menunggu 1 detik...")
 
                 // --- TAMBAHAN BARU: JEDA 1 DETIK ---
-                Handler(Looper.getMainLooper()).postDelayed({
-                    Log.d("BaswaraService", "Jeda selesai, memulai proses capture.")
-                    handleCaptureAndStartCrop()
-                }, 1000) // 1000 milidetik
-
-                Handler(Looper.getMainLooper()).postDelayed({
-                    Log.d("BaswaraService", "Dast ist skibiditoilet()")
-                    skibiditoilet()
-                }, 1000) // 1000 milidetik
+                if (!isCapturing) {
+                    isCapturing = true
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        handleCaptureAndStartCrop()
+                        isCapturing = false
+                    }, 1009)
+                }
             }
             ACTION_CROP_SUCCESS -> {
                 Log.d("BaswaraService", "ACTION_CROP_SUCCESS diterima.")
@@ -149,6 +154,10 @@ class RunningService : Service() {
                 if (croppedUri != null) {
                     processCroppedImage(croppedUri)
                 }
+            }
+            ACTION_CROP_CANCEL -> {
+                Log.d("BaswaraService", "ACTION_CROP_JANCOK diterima.")
+                skibiditoilet()
             }
             ACTION_STOP -> {
                 Log.d("BaswaraService", "ACTION_STOP received")
@@ -240,11 +249,11 @@ class RunningService : Service() {
         OCRTextKeMain = OCR
     }
     fun skibiditoilet(){
-        Handler(Looper.getMainLooper()).postDelayed({
+
             Log.d("BaswaraService", "OTW Superman")
             Intent(this, MainActivity::class.java).apply {
                 action = Intent.ACTION_VIEW
-                putExtra("navigate_to", ACTION_SCREEN)
+                putExtra("navigate_to", "back")
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
             }.let { frontIntent ->
                 PendingIntent.getActivity(
@@ -252,8 +261,6 @@ class RunningService : Service() {
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 ).send()
             }
-        }, 3300) // 1000 milidetik
-
     }
 
     private fun handleCaptureAndStartCrop() {
@@ -312,15 +319,7 @@ class RunningService : Service() {
 
             NotificationManagerCompat.from(this).notify(200009, cropNotif)
 
-
-            ShadeAccessibilityService.instance?.expandShadeViaSwipe()
-
             Handler(Looper.getMainLooper()).postDelayed({
-                val cropIntent = Intent(this, CropStarterActivity::class.java).apply {
-                    data = sourceUri
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                }
 
                 grantUriPermission(
                     "com.canhub.cropper",
@@ -328,7 +327,6 @@ class RunningService : Service() {
                     Intent.FLAG_GRANT_READ_URI_PERMISSION
                 )
 
-                startActivity(cropIntent)
             }, 500)
 
         } catch (e: Exception) {
@@ -475,13 +473,18 @@ class RunningService : Service() {
         @Json(name = "candidates") val candidates: List<ContentCandidate>
     )
 
-    fun generateContentManually(
+    private fun generateContentManually(
         apiKey: String,
         userPrompt: String,
         callback: (String?, Exception?) -> Unit
     ) {
         val moshi = Moshi.Builder().build()
-
+        val cropIntent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP
+            putExtra("mbot", "langsung")
+        }
         // Build request
         val reqObj = ContentRequest(
             contents = listOf(ContentItem(parts = listOf(ContentPart(userPrompt))))
@@ -491,7 +494,7 @@ class RunningService : Service() {
 
         // HTTP call
         val request = Request.Builder()
-            .url("https://generativelanguage.googleapis.com/v1beta/models/$modell:generateContent?key=$apiKey")
+            .url("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$apiKey")
             .addHeader("Content-Type", "application/json")
             .post(body)
             .build()
@@ -522,9 +525,11 @@ class RunningService : Service() {
                         val parts = content.getJSONArray("parts")
 
                         if (parts.length() > 0) {
+
                             val answerText = parts.getJSONObject(0).getString("text")
                             answerTextKMain = answerText
                             sendNotification(answerText)
+                            startActivity(cropIntent)
                             callback(answerText, null)
                         } else {
                             callback(null, Exception("No parts found in response"))
