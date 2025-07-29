@@ -60,6 +60,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 
 import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationManagerCompat
 
 import androidx.core.content.ContentProviderCompat.requireContext
 
@@ -85,6 +86,7 @@ import com.example.worm.ui.theme.OCRTextKeMain
 
 import com.example.worm.ui.theme.WormTheme
 import com.example.worm.ui.theme.answerTextKMain
+import com.example.worm.ui.theme.boti
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
@@ -366,9 +368,24 @@ class MainActivity : AppCompatActivity() {
         editor.putBoolean("user_pref", warn)
 
         editor.apply()
+        if(sw){
+            supportFragmentManager.beginTransaction()
 
+                .replace(R.id.container_fragment, HomeFragment())
+
+                .commit()
+
+            updateToolbarColor()
+        }else if (!sw){
+            supportFragmentManager.beginTransaction()
+
+                .replace(R.id.container_fragment, HomeFragment.DahJalan())
+
+                .commit()
+
+            updateToolbarColor()
+        }
     }
-
 
 
     override fun onNewIntent(intent: Intent) {
@@ -1165,7 +1182,7 @@ class MainActivity : AppCompatActivity() {
             startService(svc)
             sw = true
             updateToolbarColor()
-
+            boti = false
 
 
     }
@@ -1254,13 +1271,18 @@ class LogFragment : Fragment(R.layout.log) {
     class Log1 : Fragment(R.layout.log1) {
         override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
             super.onViewCreated(view, savedInstanceState)
-
+            boti = true
+            Handler(Looper.getMainLooper()).postDelayed({
+                Log.d("DELETENOTIF", "UDAH TERDELETE")
+            NotificationManagerCompat
+                .from(requireContext())
+                .cancel(100009)
+            }, 60000L)
             // Populate your views
             view.findViewById<TextView>(R.id.jdulLOG1BL)
                 .text = answerTextKMain.take(6)
             view.findViewById<TextView>(R.id.penjelasanLOG1BL)
                 .text = answerTextKMain
-
             // === BACK PRESS HANDLER FOR *THIS* FRAGMENT ===
             requireActivity()
                 .onBackPressedDispatcher
@@ -1277,6 +1299,7 @@ class LogFragment : Fragment(R.layout.log) {
                         // Clear any flags if needed
                         (activity as? MainActivity)?.cameFromNotification = false
                         sw = false
+                        boti = false
                     }
                 })
         }

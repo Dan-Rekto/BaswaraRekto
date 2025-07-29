@@ -63,7 +63,7 @@ var OCRTextKeMain = "test"
 var answerTextKMain: String = "test"
 var aikita = "AIzaSyD9-22266oY87yo8Fvwid64EoPxOZyfzis"
 var modell = ModelKeRunning
-
+var boti = false
 class RunningService : Service() {
     companion object {
         var jalan: Boolean = false
@@ -210,10 +210,14 @@ class RunningService : Service() {
             .setContentText("Cek Hoax via Scan Layar")
             .setSmallIcon(R.drawable.logo2)
             .setOngoing(true)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setOngoing(true)                           // biar tidak swipe-away
+            .setCategory(NotificationCompat.CATEGORY_CALL) // atau ALARM—menang melawan musik
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .addAction(R.drawable.tab, "Stop", stopPending)
             .addAction(R.drawable.home_svgrepo_com, "Buka", openPending)
             .addAction(R.drawable.glass, "Scan", scanPending)
+            .setStyle(NotificationCompat.DecoratedCustomViewStyle())
             .build()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(nextNotifyId(), notif, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)
@@ -310,8 +314,8 @@ class RunningService : Service() {
             )
 
             val cropNotif = NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("Screenshot Ready!")
-                .setContentText("Tap to crop your screenshot")
+                .setContentTitle("Screenshot Siap!")
+                .setContentText("Ketuk Untuk Crop beritanya!")
                 .setSmallIcon(R.drawable.logo2)
                 .setContentIntent(cropPendingIntent)
                 .setAutoCancel(true)
@@ -423,7 +427,6 @@ class RunningService : Service() {
             .setContentIntent(tapPending)
             .setAutoCancel(true)
             .build()
-
         NotificationManagerCompat.from(this)
             .notify(100009, notif)
     }
@@ -446,6 +449,7 @@ class RunningService : Service() {
         virtualDisplay?.release()
         mediaProjection?.stop()
         jalan = false
+        boti = false
     }
 
     // Fixed data classes for proper JSON parsing
@@ -530,6 +534,7 @@ class RunningService : Service() {
                             answerTextKMain = answerText
                             sendNotification(answerText)
                             startActivity(cropIntent)
+
                             callback(answerText, null)
                         } else {
                             callback(null, Exception("No parts found in response"))
