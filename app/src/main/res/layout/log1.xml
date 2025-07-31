@@ -1,36 +1,99 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app   ="http://schemas.android.com/apk/res-auto"
+    xmlns:tools ="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
-    <TextView
-        android:id="@+id/jdulLOG1BL"
-        android:layout_width="323dp"
-        android:layout_height="wrap_content"
-        android:text="Judul"
-        android:textSize="40dp"
-        android:textAlignment="center"
-        android:justificationMode="inter_word"
-        android:fontFamily="@font/mont"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:textStyle="bold"
-        android:layout_marginTop="50dp"/>
-    <TextView
-        android:id="@+id/penjelasanLOG1BL"
-        android:layout_width="350dp"
-        android:layout_height="wrap_content"
-        android:text="Penjelasan"
-        android:textAlignment="center"
-        android:justificationMode="inter_word"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/jdulLOG1BL"
-        android:layout_marginTop="30dp"
-        android:textSize="20sp"
-        android:fontFamily="@font/mont"/>
+    android:layout_height="match_parent">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <TextView
+            android:id="@+id/jdulLOG1BL"
+            android:layout_width="323dp"
+            android:layout_height="wrap_content"
+            android:text="Judul"
+            android:textSize="40dp"
+            android:textAlignment="center"
+            android:justificationMode="inter_word"
+            android:fontFamily="@font/mont"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:textStyle="bold"
+            android:layout_marginTop="50dp"/>
+        <TextView
+            android:id="@+id/penjelasanLOG1BL"
+            android:layout_width="350dp"
+            android:layout_height="wrap_content"
+            android:text="Penjelasan"
+            android:textAlignment="center"
+            android:justificationMode="inter_word"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/jdulLOG1BL"
+            android:layout_marginTop="30dp"
+            android:textSize="20sp"
+            android:fontFamily="@font/mont"/>
+
+        <TextView
+            android:id="@+id/jdulgLOG1BL"
+            android:layout_width="350dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="40dp"
+            android:fontFamily="@font/mont"
+            android:justificationMode="inter_word"
+            android:text="Penjelasan"
+            android:textAlignment="center"
+            android:textSize="20sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/penjelasanLOG1BL" />
+
+        <TextView
+            android:id="@+id/jdulnewsLOG1BL"
+            android:layout_width="350dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="40dp"
+            android:fontFamily="@font/mont"
+            android:justificationMode="inter_word"
+            android:text="Penjelasan"
+            android:textAlignment="center"
+            android:textSize="20sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/gnewsLOG1BL" />
+
+        <Button
+            android:id="@+id/gnewsLOG1BL"
+            android:layout_width="350dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="70dp"
+            android:fontFamily="@font/mont"
+            android:justificationMode="inter_word"
+            android:text="URL1 (Gnews)"
+            android:textAlignment="center"
+            android:textSize="20sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/penjelasanLOG1BL" />
+
+        <Button
+            android:id="@+id/newsapiLOG1BL"
+            android:layout_width="350dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="70dp"
+            android:fontFamily="@font/mont"
+            android:justificationMode="inter_word"
+            android:text="URL2 (News API)"
+            android:textAlignment="center"
+            android:textSize="20sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/gnewsLOG1BL" />
 
 
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>
 
-</androidx.constraintlayout.widget.ConstraintLayout>

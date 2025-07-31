@@ -54,13 +54,18 @@ import android.service.autofill.Validators.or
 import com.example.worm.ui.theme.CropStarterActivity // Tambahkan import ini
 import androidx.core.content.FileProvider
 import com.example.worm.APIkeRunning
+import com.example.worm.GNEWS_API_KEY
 import com.example.worm.ModelKeRunning
 import kotlinx.coroutines.delay
-
+import java.lang.System.err
+import java.net.URLEncoder
+import java.util.Collections.list
 
 
 var OCRTextKeMain = "test"
 var answerTextKMain: String = "test"
+var gnewsjdul: String = ""
+var gnewsurl: String = ""
 var aikita = "AIzaSyD9-22266oY87yo8Fvwid64EoPxOZyfzis"
 var modell = ModelKeRunning
 var boti = false
@@ -351,6 +356,22 @@ class RunningService : Service() {
                 .process(inputImage)
                 .addOnSuccessListener { result ->
                     Log.d("BaswaraService", "OCR success: ${result.text.take(50)}")
+                    val onlyLetters = result.text
+                        .replace(Regex("[^\\p{L}\\s]"), " ")
+                    // 2) Split on whitespace, drop tokens < 3 chars
+                    val tokens = onlyLetters
+                        .split(Regex("\\s+"))
+                        .map { it.trim() }
+                        .filter { it.length >= 3 }
+                    generateGnewsManually(GNEWS_API_KEY, tokens.joinToString(separator="").take(150).replace(",", "").trim()) { articles, err ->
+                        if (err != null) Log.e("GNews", "Error", err)
+                        else articles?.forEach { (title, url) ->
+                            Log.d("GNews", "→ $title → $url")
+                            gnewsjdul = title
+                            gnewsurl = url
+                        }
+                        Log.d("Gnews", tokens.joinToString(separator="").take(150).replace(",", "").trim())
+                    }
                     sendOCR(result.text)
                     waitYa("Memproses Hasil Scan Gambar", "Memproses...")
                     val userText = result.text
@@ -549,4 +570,62 @@ class RunningService : Service() {
             }
         })
     }
+
+    fun generateGnewsManually(
+        apiKey: String,
+        query: String,
+        callback: (List<Pair<String, String>>?, Exception?) -> Unit
+    ) {
+        val encoded = URLEncoder.encode(query, "UTF-8")
+        // <-- use apikey=… not token=…
+        val url = "https://gnews.io/api/v4/search?q=$encoded&apikey=$apiKey&lang=en&max=5"
+
+        Log.d("GNews▶", "About to call: $url")
+
+        val request = Request.Builder()
+            .url(url)
+            .get()
+            .build()
+
+        OkHttpClient().newCall(request).enqueue(object : okhttp3.Callback {
+            override fun onFailure(call: okhttp3.Call, e: IOException) {
+                Log.e("GNews✖", "Network failure", e)
+                callback(null, e)
+            }
+
+            override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+                Log.d("GNews✔", "HTTP ${response.code}")
+                val body = response.body?.string().orEmpty()
+                Log.d("GNews▶body", body)
+
+                if (!response.isSuccessful) {
+                    callback(null, Exception("HTTP ${response.code}: ${response.message}"))
+                    return
+                }
+                try {
+                    // 4) Parse JSON
+                    val body = response.body?.string().orEmpty()
+                    val root = JSONObject(body)
+                    val arr  = root.getJSONArray("articles")
+                    val list = mutableListOf<Pair<String, String>>()
+
+                    for (i in 0 until arr.length()) {
+                        val obj   = arr.getJSONObject(i)
+                        val title = obj.optString("title")
+                        val url   = obj.optString("url")
+                        list += title to url
+
+
+                    }
+                    callback(list, null)
+                } catch (e: Exception) {
+                    callback(null, e)
+                }
+            }
+        })
+    }
+
+// 3) Cara pakai:
+
+
 }

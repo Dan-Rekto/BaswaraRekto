@@ -87,6 +87,8 @@ import com.example.worm.ui.theme.OCRTextKeMain
 import com.example.worm.ui.theme.WormTheme
 import com.example.worm.ui.theme.answerTextKMain
 import com.example.worm.ui.theme.boti
+import com.example.worm.ui.theme.gnewsjdul
+import com.example.worm.ui.theme.gnewsurl
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
@@ -114,7 +116,7 @@ var bush:Boolean = false
 var APIkeRunning = ""
 var ModelKeRunning = ""
 var stopit:Boolean = false
-
+var GNEWS_API_KEY: String = "a08f9c6764e13a9b3372ff3da5493c2d"
 // Add companion object to store log texts
 
 class LogDataManager {
@@ -1283,6 +1285,20 @@ class LogFragment : Fragment(R.layout.log) {
                 .text = answerTextKMain.take(6)
             view.findViewById<TextView>(R.id.penjelasanLOG1BL)
                 .text = answerTextKMain
+
+            //buat gnews
+            view.findViewById<TextView>(R.id.jdulgLOG1BL)
+                .text = gnewsjdul
+            val urlgnews = view.findViewById<Button>(R.id.gnewsLOG1BL)
+            urlgnews.text = gnewsurl.take(13).trim()
+            urlgnews.setOnClickListener {
+
+            }
+
+            //buatnewsid
+            view.findViewById<TextView>(R.id.jdulnewsLOG1BL)
+            view.findViewById<Button>(R.id.newsapiLOG1BL)
+
             // === BACK PRESS HANDLER FOR *THIS* FRAGMENT ===
             requireActivity()
                 .onBackPressedDispatcher
