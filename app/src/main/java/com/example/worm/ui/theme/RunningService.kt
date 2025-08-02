@@ -63,9 +63,11 @@ import java.util.Collections.list
 
 
 var OCRTextKeMain = "test"
+var serpAI = "43d8ce02c1a232a9e87ca1111b87be9a860a3e7bb72724b4ee1fa65d4081a148"
 var answerTextKMain: String = "test"
 var gnewsjdul: String = ""
 var gnewsurl: String = ""
+var googleurl: String = ""
 var aikita = "AIzaSyD9-22266oY87yo8Fvwid64EoPxOZyfzis"
 var modell = ModelKeRunning
 var boti = false
@@ -172,86 +174,7 @@ class RunningService : Service() {
         return START_STICKY
     }
 
-    private fun startMediaProjection(resultCode: Int, resultData: Intent) {
-        // Build pending intents
-        // 1) STOP → MainActivity with your navigate_to extra
-        val stopIntent = Intent(this, MainActivity::class.java).apply {
-            action = Intent.ACTION_VIEW
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
-                    Intent.FLAG_ACTIVITY_SINGLE_TOP
-            putExtra("navigate_to", ACTION_STOP)  // "stop_and_home"
-        }
-        val stopPending = PendingIntent.getActivity(
-            this, 0, stopIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
 
-        // 2) BUKA → simply bring your existing MainActivity to front
-        val openIntent = Intent(this, MainActivity::class.java).apply {
-            action = Intent.ACTION_VIEW
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
-                    Intent.FLAG_ACTIVITY_SINGLE_TOP
-        }
-
-        val openPending = PendingIntent.getActivity(
-            this, 1, openIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val scanIntent = Intent(this, RunningService::class.java).apply {
-            action = ACTION_SCREEN
-        }
-        val scanPending = PendingIntent.getService(
-            this, 2, scanIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-
-        // Foreground notification
-        val notif = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Baswara")
-            .setContentText("Cek Hoax via Scan Layar")
-            .setSmallIcon(R.drawable.logo2)
-            .setOngoing(true)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setOngoing(true)                           // biar tidak swipe-away
-            .setCategory(NotificationCompat.CATEGORY_CALL) // atau ALARM—menang melawan musik
-            .setPriority(NotificationCompat.PRIORITY_MAX)
-            .addAction(R.drawable.tab, "Stop", stopPending)
-            .addAction(R.drawable.home_svgrepo_com, "Buka", openPending)
-            .addAction(R.drawable.glass, "Scan", scanPending)
-            .setStyle(NotificationCompat.DecoratedCustomViewStyle())
-            .build()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(nextNotifyId(), notif, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)
-        } else {
-            startForeground(nextNotifyId(), notif)
-        }
-
-        // Initialize MediaProjection & ImageReader
-        val mgr = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-        mediaProjection = mgr.getMediaProjection(resultCode, resultData)
-
-        mediaProjection?.registerCallback(object : MediaProjection.Callback() {
-            override fun onStop() {
-                Log.d("RunningService", "MediaProjection stopped; releasing display")
-                virtualDisplay?.release()
-                virtualDisplay = null
-            }
-        }, Handler(Looper.getMainLooper()))
-
-        val dm = resources.displayMetrics
-        imageReader = ImageReader.newInstance(dm.widthPixels, dm.heightPixels, PixelFormat.RGBA_8888, 2)
-
-        // Create VirtualDisplay ONCE and keep it
-        virtualDisplay = mediaProjection?.createVirtualDisplay(
-            "RunningServiceCapture", dm.widthPixels, dm.heightPixels, dm.densityDpi,
-            DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
-            imageReader.surface, null, Handler(Looper.getMainLooper())
-        )
-    }
 
     fun sendOCR(OCR: String) {
         var OCRText = OCR
@@ -363,15 +286,22 @@ class RunningService : Service() {
                         .split(Regex("\\s+"))
                         .map { it.trim() }
                         .filter { it.length >= 3 }
-                    generateGnewsManually(GNEWS_API_KEY, tokens.joinToString(separator="").take(150).replace(",", "").trim()) { articles, err ->
-                        if (err != null) Log.e("GNews", "Error", err)
-                        else articles?.forEach { (title, url) ->
-                            Log.d("GNews", "→ $title → $url")
-                            gnewsjdul = title
-                            gnewsurl = url
+                    val queryRaw = tokens
+                        .joinToString(" ")    // natural words separated by spaces
+                        .take(150)   .replace(",", "+")  .trim()      // cap total length
+                        generateSerpaiManually(serpAI, queryRaw) { articles, err ->
+                            if (err != null) {
+                                Log.e("SerpApi", "Error", err)
+                            } else {
+                                articles?.forEach { (title, link, googleUrl) ->
+                                    Log.d("SerpApi", "→ $title → $link → $googleUrl")
+                                    gnewsjdul = title
+                                    gnewsurl = link
+                                    googleurl = googleUrl
+                                    Log.d("Serpai", "→ $gnewsjdul → $gnewsurl → $googleurl")
+                                }
+                            }
                         }
-                        Log.d("Gnews", tokens.joinToString(separator="").take(150).replace(",", "").trim())
-                    }
                     sendOCR(result.text)
                     waitYa("Memproses Hasil Scan Gambar", "Memproses...")
                     val userText = result.text
@@ -399,6 +329,87 @@ class RunningService : Service() {
         } catch (e: IOException) {
             Log.e("BaswaraService", "Gagal mengubah URI hasil crop menjadi Bitmap", e)
         }
+    }
+
+    private fun startMediaProjection(resultCode: Int, resultData: Intent) {
+        // Build pending intents
+        // 1) STOP → MainActivity with your navigate_to extra
+        val stopIntent = Intent(this, MainActivity::class.java).apply {
+            action = Intent.ACTION_VIEW
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP
+            putExtra("navigate_to", ACTION_STOP)  // "stop_and_home"
+        }
+        val stopPending = PendingIntent.getActivity(
+            this, 0, stopIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        // 2) BUKA → simply bring your existing MainActivity to front
+        val openIntent = Intent(this, MainActivity::class.java).apply {
+            action = Intent.ACTION_VIEW
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+
+        val openPending = PendingIntent.getActivity(
+            this, 1, openIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val scanIntent = Intent(this, RunningService::class.java).apply {
+            action = ACTION_SCREEN
+        }
+        val scanPending = PendingIntent.getService(
+            this, 2, scanIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+
+        // Foreground notification
+        val notif = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("Baswara")
+            .setContentText("Cek Hoax via Scan Layar")
+            .setSmallIcon(R.drawable.logo2)
+            .setOngoing(true)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setOngoing(true)                           // biar tidak swipe-away
+            .setCategory(NotificationCompat.CATEGORY_CALL) // atau ALARM—menang melawan musik
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .addAction(R.drawable.tab, "Stop", stopPending)
+            .addAction(R.drawable.home_svgrepo_com, "Buka", openPending)
+            .addAction(R.drawable.glass, "Scan", scanPending)
+            .setStyle(NotificationCompat.DecoratedCustomViewStyle())
+            .build()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(nextNotifyId(), notif, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)
+        } else {
+            startForeground(nextNotifyId(), notif)
+        }
+
+        // Initialize MediaProjection & ImageReader
+        val mgr = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+        mediaProjection = mgr.getMediaProjection(resultCode, resultData)
+
+        mediaProjection?.registerCallback(object : MediaProjection.Callback() {
+            override fun onStop() {
+                Log.d("RunningService", "MediaProjection stopped; releasing display")
+                virtualDisplay?.release()
+                virtualDisplay = null
+            }
+        }, Handler(Looper.getMainLooper()))
+
+        val dm = resources.displayMetrics
+        imageReader = ImageReader.newInstance(dm.widthPixels, dm.heightPixels, PixelFormat.RGBA_8888, 2)
+
+        // Create VirtualDisplay ONCE and keep it
+        virtualDisplay = mediaProjection?.createVirtualDisplay(
+            "RunningServiceCapture", dm.widthPixels, dm.heightPixels, dm.densityDpi,
+            DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
+            imageReader.surface, null, Handler(Looper.getMainLooper())
+        )
     }
 
     fun waitYa(textnya: String, isinya: String) {
@@ -629,3 +640,78 @@ class RunningService : Service() {
 
 
 }
+    fun generateSerpaiManually(
+        apiKey: String,
+        query: String,
+        callback: (List<Triple<String, String, String>>?, Exception?) -> Unit
+    ) {
+        // 1) URL-encode the query
+        val encoded = URLEncoder.encode(query, "UTF-8")
+
+        // 2) Construct the SerpApi Search endpoint URL
+        //    engine=google is required; you can swap in any supported engine
+        val url = "https://serpapi.com/search.json?engine=google&q=$encoded&location=id&tbm=nws&safe=active&gl=id&hl=id&device=mobile&api_key=$serpAI"
+
+        Log.d("SerpApi▶", "About to call: $url")
+
+        // 3) Build and fire the request
+        val request = Request.Builder()
+            .url(url)
+            .get()
+            .build()
+
+        OkHttpClient().newCall(request).enqueue(object : okhttp3.Callback {
+            override fun onFailure(call: okhttp3.Call, e: IOException) {
+                Log.e("SerpApi✖", "Network failure", e)
+                callback(null, e)
+            }
+
+            override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+                Log.d("SerpApi✔", "HTTP ${response.code}")
+                val bodyText = response.body?.string().orEmpty()
+                Log.d("SerpApi▶body", bodyText)
+
+                if (!response.isSuccessful) {
+                    callback(null, Exception("HTTP ${response.code}: ${response.message}"))
+                    return
+                }
+
+                try {
+                    val root = JSONObject(bodyText)
+
+                    // 1) Extract the overall Google URL from the metadata
+                    val metadata = root.optJSONObject("search_metadata")
+                    val googleUrl = metadata
+                        ?.optString("google_url")
+                        ?.trim()
+                        .orEmpty()
+
+                    // 2) Pull the first news result
+                    val arr = root.optJSONArray("news_results")
+                    if (arr != null && arr.length() > 0) {
+                        val first = arr.getJSONObject(0)
+                        val title = first.optString("title").trim()
+                        val link  = first.optString("link").trim()
+
+                        // 3) Only assign if title+link are nonblank
+                        if (title.isNotBlank() && link.isNotBlank()) {
+                            gnewsjdul = title
+                            gnewsurl  = link
+                            googleurl = googleUrl    // from metadata
+                        }
+                    } else {
+                        Log.w("SerpApi", "No news_results array or it’s empty")
+                    }
+
+                } catch (e: Exception) {
+                    Log.e("SerpApi✖", "JSON parsing error", e)
+                }
+            }
+        })
+    }
+
+
+
+
+
+

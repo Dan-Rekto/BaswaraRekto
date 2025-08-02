@@ -15,6 +15,7 @@ import android.graphics.Color
 import android.graphics.drawable.Drawable
 
 import android.media.projection.MediaProjectionManager
+import android.net.Uri
 
 import android.os.Build
 
@@ -73,6 +74,7 @@ import androidx.drawerlayout.widget.DrawerLayout
 
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
+import androidx.lifecycle.lifecycleScope
 
 import com.example.worm.HomeFragment.DahJalan
 
@@ -89,6 +91,7 @@ import com.example.worm.ui.theme.answerTextKMain
 import com.example.worm.ui.theme.boti
 import com.example.worm.ui.theme.gnewsjdul
 import com.example.worm.ui.theme.gnewsurl
+import com.example.worm.ui.theme.googleurl
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
@@ -97,6 +100,7 @@ import com.google.android.material.navigation.NavigationView
 import com.google.firebase.FirebaseApp
 import com.skydoves.expandablelayout.ExpandableLayout
 import com.skydoves.expandablelayout.OnExpandListener
+import kotlinx.coroutines.delay
 
 
 var sw: Boolean = true
@@ -270,7 +274,7 @@ Untuk menggunakan "Scan", Tekan dulu scannya dan langsung tutup Jendela Notifika
 
 
 class MainActivity : AppCompatActivity() {
-
+    private var clearNotifRunnable: Runnable? = null
     private val PREFS_NAME = "app_prefs"
 
     private val KEY_SW = "sw"
@@ -370,7 +374,8 @@ class MainActivity : AppCompatActivity() {
         editor.putBoolean("user_pref", warn)
 
         editor.apply()
-        if(sw){
+        Handler(Looper.getMainLooper()).postDelayed({
+            if(sw){
             supportFragmentManager.beginTransaction()
 
                 .replace(R.id.container_fragment, HomeFragment())
@@ -386,7 +391,8 @@ class MainActivity : AppCompatActivity() {
                 .commit()
 
             updateToolbarColor()
-        }
+        }},30000)
+
     }
 
 
@@ -1019,34 +1025,6 @@ class MainActivity : AppCompatActivity() {
 
         when (current) {
 
-            is LogFragment -> {
-
-                if (sw) {
-
-                    lg = true
-
-                    supportFragmentManager.beginTransaction()
-
-                        .replace(R.id.container_fragment, HomeFragment())
-
-                        .commit()
-
-                    updateToolbarColorlg()
-
-                } else if (!sw){
-                    lg = true
-
-                    supportFragmentManager.beginTransaction()
-
-                        .replace(R.id.container_fragment, HomeFragment.DahJalan())
-
-                        .commit()
-
-                    updateToolbarColorlg()
-
-                }
-
-            }
             is SettingsFragment -> {
                 if (sw) {
                     sett = true
@@ -1212,58 +1190,37 @@ class LogFragment : Fragment(R.layout.log) {
         super.onViewCreated(view, savedInstanceState)
         view.findViewById<TextView>(R.id.textlog1).setText("${OCRTextKeMain.take(10)}...")
 
+        requireActivity()
+            .onBackPressedDispatcher
+            .addCallback(viewLifecycleOwner, object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    if (sw) {
+                        lg = true
+                        parentFragmentManager.beginTransaction()
+                            .replace(R.id.container_fragment, HomeFragment())
+                            .commitAllowingStateLoss()
+                        (activity as? MainActivity)?.updateToolbarColor()
+                    } else {
+                        lg = true
+                        parentFragmentManager.beginTransaction()
+                            .replace(R.id.container_fragment, HomeFragment.DahJalan())
+                            .commitAllowingStateLoss()
+                        (activity as? MainActivity)?.updateToolbarColor()
+                    }
+
+                    // now disable & remove this callback so back behaves normally afterwards
+                    isEnabled = false
+                    remove()
+                }
+            })
 // Set up click listeners for log buttons
 
         view.findViewById<ImageButton>(R.id.Log1)?.setOnClickListener {
-
             parentFragmentManager.beginTransaction()
-
                 .replace(R.id.container_fragment, Log1())
-
-                .addToBackStack(null)
-
                 .commit()
-
             lg = true
-
             (activity as? MainActivity)?.toolbar?.setBackgroundColor( Color.WHITE)
-
-        }
-
-
-
-        view.findViewById<ImageButton>(R.id.Log2)?.setOnClickListener {
-
-            parentFragmentManager.beginTransaction()
-
-                .replace(R.id.container_fragment, Log2())
-
-                .addToBackStack(null)
-
-                .commit()
-
-            lg = true
-
-            (activity as? MainActivity)?.updateToolbarColorlg()
-
-        }
-
-
-
-        view.findViewById<ImageButton>(R.id.Log3)?.setOnClickListener {
-
-            parentFragmentManager.beginTransaction()
-
-                .replace(R.id.container_fragment, Log3())
-
-                .addToBackStack(null)
-
-                .commit()
-
-            lg = true
-
-            (activity as? MainActivity)?.updateToolbarColorlg()
-
         }
 
     }
@@ -1274,12 +1231,12 @@ class LogFragment : Fragment(R.layout.log) {
         override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
             super.onViewCreated(view, savedInstanceState)
             boti = true
-            Handler(Looper.getMainLooper()).postDelayed({
-                Log.d("DELETENOTIF", "UDAH TERDELETE")
-            NotificationManagerCompat
-                .from(requireContext())
-                .cancel(100009)
-            }, 60000L)
+            lifecycleScope.launchWhenStarted {
+                delay(60_000L)
+                NotificationManagerCompat.from(requireContext()).cancel(100009)
+                Log.d("BASWARACANCELNOTIF", "DAH TERCANCEL")
+            }
+
             // Populate your views
             view.findViewById<TextView>(R.id.jdulLOG1BL)
                 .text = answerTextKMain.take(6)
@@ -1288,34 +1245,55 @@ class LogFragment : Fragment(R.layout.log) {
 
             //buat gnews
             view.findViewById<TextView>(R.id.jdulgLOG1BL)
-                .text = gnewsjdul
+                .text = "Telusuri Di Google"
             val urlgnews = view.findViewById<Button>(R.id.gnewsLOG1BL)
-            urlgnews.text = gnewsurl.take(13).trim()
+            urlgnews.text = "${googleurl.take(15).trim()}..."
             urlgnews.setOnClickListener {
-
+                val url = googleurl
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                if (url.isNotBlank() || url.isNotEmpty()){
+                    startActivity(intent)
+                }else{
+                    Toast.makeText(requireContext(), "Berita tidak ditemukan", Toast.LENGTH_SHORT).show()
+                }
             }
 
             //buatnewsid
-            view.findViewById<TextView>(R.id.jdulnewsLOG1BL)
-            view.findViewById<Button>(R.id.newsapiLOG1BL)
+            view.findViewById<TextView>(R.id.jdulnewsLOG1BL).text = gnewsurl.take(13).trim()
 
+            val news2but = view.findViewById<Button>(R.id.newsapiLOG1BL)
+            news2but.text = "${gnewsurl.take(15).trim()}..."
+            news2but.setOnClickListener {
+                val url = gnewsurl
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                if (url.isNotBlank() || url.isNotEmpty()){
+                    startActivity(intent)
+                }else{
+                    Toast.makeText(requireContext(), "Berita tidak ditemukan", Toast.LENGTH_SHORT).show()
+                }
+            }
             // === BACK PRESS HANDLER FOR *THIS* FRAGMENT ===
             requireActivity()
                 .onBackPressedDispatcher
                 .addCallback(viewLifecycleOwner, object : OnBackPressedCallback(true) {
                     override fun handleOnBackPressed() {
-                        // Redirect to DahJalan (always, regardless of cameFromNotification)
-                        parentFragmentManager.beginTransaction()
-                            .replace(R.id.container_fragment, HomeFragment.DahJalan())
-                            .commitAllowingStateLoss()
+                        if (sw) {
+                            lg = true
+                            parentFragmentManager.beginTransaction()
+                                .replace(R.id.container_fragment, HomeFragment())
+                                .commitAllowingStateLoss()
+                            (activity as? MainActivity)?.updateToolbarColor()
+                        } else {
+                            lg = true
+                            parentFragmentManager.beginTransaction()
+                                .replace(R.id.container_fragment, HomeFragment.DahJalan())
+                                .commitAllowingStateLoss()
+                            (activity as? MainActivity)?.updateToolbarColor()
+                        }
 
-                        // Update the toolbar color via your activity
-                        (activity as? MainActivity)?.updateToolbarColor()
-
-                        // Clear any flags if needed
-                        (activity as? MainActivity)?.cameFromNotification = false
-                        sw = false
-                        boti = false
+                        // now disable & remove this callback so back behaves normally afterwards
+                        isEnabled = false
+                        remove()
                     }
                 })
         }
