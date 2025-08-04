@@ -20,6 +20,7 @@ import android.net.Uri
 import android.os.Build
 
 import android.os.Bundle
+import android.os.CountDownTimer
 
 import android.util.TypedValue
 
@@ -374,24 +375,6 @@ class MainActivity : AppCompatActivity() {
         editor.putBoolean("user_pref", warn)
 
         editor.apply()
-        Handler(Looper.getMainLooper()).postDelayed({
-            if(sw){
-            supportFragmentManager.beginTransaction()
-
-                .replace(R.id.container_fragment, HomeFragment())
-
-                .commit()
-
-            updateToolbarColor()
-        }else if (!sw){
-            supportFragmentManager.beginTransaction()
-
-                .replace(R.id.container_fragment, HomeFragment.DahJalan())
-
-                .commit()
-
-            updateToolbarColor()
-        }},30000)
 
     }
 
@@ -918,6 +901,8 @@ class MainActivity : AppCompatActivity() {
             handleNavigationIntent(intent)
         }
 
+
+
     }
 
 
@@ -1155,7 +1140,9 @@ class MainActivity : AppCompatActivity() {
         handler.removeCallbacks(resetBackPress)
 
         handler.removeCallbacks(resetBackPress1)
-
+        NotificationManagerCompat.from(this)
+            .cancel(100009)
+        Log.d("BASWARACANCELNOTIF", "DAH TERCANCEL")
         handler.removeCallbacks {resetBackPressCount}
         Intent(this, RunningService::class.java).also { svc ->
             svc.action = RunningService.ACTION_STOP
@@ -1163,6 +1150,7 @@ class MainActivity : AppCompatActivity() {
             sw = true
             updateToolbarColor()
             boti = false
+
 
 
     }
@@ -1231,17 +1219,26 @@ class LogFragment : Fragment(R.layout.log) {
         override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
             super.onViewCreated(view, savedInstanceState)
             boti = true
-            lifecycleScope.launchWhenStarted {
-                delay(60_000L)
-                NotificationManagerCompat.from(requireContext()).cancel(100009)
-                Log.d("BASWARACANCELNOTIF", "DAH TERCANCEL")
+            val prefs = requireContext()
+                .getSharedPreferences("BaswaraPrefs", Context.MODE_PRIVATE)
+
+            val savedTitle      = prefs.getString("last_title",       "") ?: ""
+            val savedUrl        = prefs.getString("last_url",         "") ?: ""
+            val savedGoogleUrl  = prefs.getString("last_google_url",  "") ?: ""
+            val savedAnswerText = prefs.getString("last_answer_text", "") ?: ""
+
+            if (answerTextKMain == "Lakukan Pencarian Dulu:D"){
+                view.findViewById<TextView>(R.id.jdulLOG1BL)
+                    .text = "Lakukan Pencarian Dulu:D"
+                view.findViewById<TextView>(R.id.penjelasanLOG1BL)
+                    .text = "*Baswara tidak akan menyimpan History pencarian user"
+            }else{
+                view.findViewById<TextView>(R.id.jdulLOG1BL)
+                    .text = answerTextKMain.take(6)
+                view.findViewById<TextView>(R.id.penjelasanLOG1BL)
+                    .text = answerTextKMain
             }
 
-            // Populate your views
-            view.findViewById<TextView>(R.id.jdulLOG1BL)
-                .text = answerTextKMain.take(6)
-            view.findViewById<TextView>(R.id.penjelasanLOG1BL)
-                .text = answerTextKMain
 
             //buat gnews
             view.findViewById<TextView>(R.id.jdulgLOG1BL)
@@ -1259,7 +1256,7 @@ class LogFragment : Fragment(R.layout.log) {
             }
 
             //buatnewsid
-            view.findViewById<TextView>(R.id.jdulnewsLOG1BL).text = gnewsurl.take(13).trim()
+            view.findViewById<TextView>(R.id.jdulnewsLOG1BL).text = gnewsjdul.take(15).trim()
 
             val news2but = view.findViewById<Button>(R.id.newsapiLOG1BL)
             news2but.text = "${gnewsurl.take(15).trim()}..."

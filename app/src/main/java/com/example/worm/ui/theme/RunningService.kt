@@ -51,6 +51,7 @@ import android.content.BroadcastReceiver // Tambahkan import ini
 import android.content.IntentFilter // Tambahkan import ini
 import android.graphics.Rect // Tambahkan import ini
 import android.service.autofill.Validators.or
+import androidx.core.content.ContentProviderCompat.requireContext
 import com.example.worm.ui.theme.CropStarterActivity // Tambahkan import ini
 import androidx.core.content.FileProvider
 import com.example.worm.APIkeRunning
@@ -60,11 +61,12 @@ import kotlinx.coroutines.delay
 import java.lang.System.err
 import java.net.URLEncoder
 import java.util.Collections.list
+import kotlin.apply
 
 
 var OCRTextKeMain = "test"
 var serpAI = "43d8ce02c1a232a9e87ca1111b87be9a860a3e7bb72724b4ee1fa65d4081a148"
-var answerTextKMain: String = "test"
+var answerTextKMain: String = "Lakukan Pencarian Dulu:D"
 var gnewsjdul: String = ""
 var gnewsurl: String = ""
 var googleurl: String = ""
@@ -109,7 +111,7 @@ class RunningService : Service() {
                     if (croppedUri != null) {
                         processCroppedImage(croppedUri)
                     }
-                }else if (intent?.action == ACTION_CROP_CANCEL) {
+                } else if (intent?.action == ACTION_CROP_CANCEL) {
                     Log.d("BaswaraService", "ACTION_CROP_CANCEL received.")
 
                 }
@@ -125,8 +127,14 @@ class RunningService : Service() {
             intentFilter,
             ContextCompat.RECEIVER_NOT_EXPORTED
         )
+        val prefs = getSharedPreferences("BaswaraPrefs", Context.MODE_PRIVATE)
+        prefs.edit()
+            .putString("last_title",       gnewsjdul)
+            .putString("last_url",         gnewsurl)
+            .putString("last_google_url",  googleurl)
+            .putString("last_answer_text", answerTextKMain)
+            .apply()
     }
-
 
 
     override fun onStartCommand(intent: Intent?, flagss: Int, startId: Int): Int {
@@ -143,6 +151,7 @@ class RunningService : Service() {
                     stopSelf()
                 }
             }
+
             ACTION_SCREEN -> {
                 Log.d("BaswaraService", "ACTION_SCREEN diterima, menunggu 1 detik...")
 
@@ -155,6 +164,7 @@ class RunningService : Service() {
                     }, 1009)
                 }
             }
+
             ACTION_CROP_SUCCESS -> {
                 Log.d("BaswaraService", "ACTION_CROP_SUCCESS diterima.")
                 val croppedUri = intent.data
@@ -162,10 +172,12 @@ class RunningService : Service() {
                     processCroppedImage(croppedUri)
                 }
             }
+
             ACTION_CROP_CANCEL -> {
                 Log.d("BaswaraService", "ACTION_CROP_JANCOK diterima.")
                 skibiditoilet()
             }
+
             ACTION_STOP -> {
                 Log.d("BaswaraService", "ACTION_STOP received")
                 stopSelf()
@@ -175,24 +187,25 @@ class RunningService : Service() {
     }
 
 
-
     fun sendOCR(OCR: String) {
         var OCRText = OCR
         OCRTextKeMain = OCR
     }
-    fun skibiditoilet(){
 
-            Log.d("BaswaraService", "OTW Superman")
-            Intent(this, MainActivity::class.java).apply {
-                action = Intent.ACTION_VIEW
-                putExtra("navigate_to", "back")
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            }.let { frontIntent ->
-                PendingIntent.getActivity(
-                    this, 42, frontIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                ).send()
-            }
+    fun skibiditoilet() {
+
+        Log.d("BaswaraService", "OTW Superman")
+        Intent(this, MainActivity::class.java).apply {
+            action = Intent.ACTION_VIEW
+            putExtra("navigate_to", "back")
+            flags =
+                Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }.let { frontIntent ->
+            PendingIntent.getActivity(
+                this, 42, frontIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            ).send()
+        }
     }
 
     private fun handleCaptureAndStartCrop() {
@@ -220,7 +233,8 @@ class RunningService : Service() {
             val scaleFactor = 0.7f
             val scaledWidth = (fullBitmap.width * scaleFactor).toInt()
             val scaledHeight = (fullBitmap.height * scaleFactor).toInt()
-            val scaledBitmap = Bitmap.createScaledBitmap(fullBitmap, scaledWidth, scaledHeight, true)
+            val scaledBitmap =
+                Bitmap.createScaledBitmap(fullBitmap, scaledWidth, scaledHeight, true)
 
             val tempFile = File(cacheDir, "screenshot_for_crop.png")
             FileOutputStream(tempFile).use { out ->
@@ -229,7 +243,8 @@ class RunningService : Service() {
             val sourceUri = FileProvider.getUriForFile(
                 this,
                 "${packageName}.provider",
-                tempFile)
+                tempFile
+            )
 
             val cropIntent = Intent(this, CropStarterActivity::class.java).apply {
                 data = sourceUri
@@ -288,29 +303,29 @@ class RunningService : Service() {
                         .filter { it.length >= 3 }
                     val queryRaw = tokens
                         .joinToString(" ")    // natural words separated by spaces
-                        .take(150)   .replace(",", "+")  .trim()      // cap total length
-                        generateSerpaiManually(serpAI, queryRaw) { articles, err ->
-                            if (err != null) {
-                                Log.e("SerpApi", "Error", err)
-                            } else {
-                                articles?.forEach { (title, link, googleUrl) ->
-                                    Log.d("SerpApi", "→ $title → $link → $googleUrl")
-                                    gnewsjdul = title
-                                    gnewsurl = link
-                                    googleurl = googleUrl
-                                    Log.d("Serpai", "→ $gnewsjdul → $gnewsurl → $googleurl")
-                                }
+                        .take(150).replace(",", "+").trim()      // cap total length
+                    generateSerpaiManually(serpAI, queryRaw) { articles, err ->
+                        if (err != null) {
+                            Log.e("SerpApi", "Error", err)
+                        } else {
+                            articles?.forEach { (title, link, googleUrl) ->
+                                Log.d("SerpApi", "→ $title → $link → $googleUrl")
+                                gnewsjdul = title
+                                gnewsurl = link
+                                googleurl = googleUrl
+                                Log.d("Serpai", "→ $gnewsjdul → $gnewsurl → $googleurl")
                             }
                         }
+                    }
                     sendOCR(result.text)
                     waitYa("Memproses Hasil Scan Gambar", "Memproses...")
                     val userText = result.text
                     val prompt = """
       Kamu adalah seorang AI pendeteksi hoax.
-      Mulai sekarang, awali kata-katamu dengan kata "FAKTA✅", "HOAKS❌", "TIDAK DIKETAHUI".
+      Mulai sekarang, awali kata-katamu dengan kata "FAKTA✅", "HOAKS❌", "UNTOLD".
       KAMU MERUPAKAN AGEN AI PENDETEKSI HOAX DARI APLIKASI BASWARA.
       TUGASMU HANYA MENDETEKSI HOAX, DAN JUGA MEMBERIKAN PENJELASAN MENGENAI HOAX TERSEBUT. CARILAH INFORMASI DI GOOGLE DAN BERI TAHU KE PENGGUNA MENGAPA INFORMASI INI PALSU ATAUPUN ASLI.
-      BERTINGKAHLAH FORMAL DAN PROFESSIONAL. MAKSIMAL 3 KALIMAT TANPA TANDA TANDA SEPERTI "/" "*". 1 KALIMAT YANG TEGAS DAN LUGAS SESUAI BERITA DI GOOGLE, SESUAIKAN DENGAN BERITA YANG TERSEDIA DI GOOGLE, UTAMAKAN KEEBENARAN DIBANDING SUBJEKTIVITAS
+      BERTINGKAHLAH FORMAL DAN PROFESSIONAL. MAKSIMAL 3 KALIMAT TANPA TANDA TANDA SEPERTI "/" "*" DAN 6 KARAKTER PERTAMA HARUS BERISIKAN "FAKTA✅", "HOAKS❌", ATAU "UNTOLD". 1 KALIMAT YANG TEGAS DAN LUGAS SESUAI BERITA DI GOOGLE, SESUAIKAN DENGAN BERITA YANG TERSEDIA DI GOOGLE TERUTAMA DI CNN INDONESIA, TEMPONEWS, DAN DETIK.COM. JIAK TIDAK ADA, CARILAH 5 ARTIKEL INDONESIA, COCOKKAN JAWABANNYA DAN SIMPULKAN ANTARA FAKTA ATAU HOAX, UTAMAKAN KEEBENARAN DIBANDING SUBJEKTIVITAS. SEKALI LAGI JANGAN PAKAI TANDA BACA APAPUN SEPERTI "*/", DAN JUGA KALAU BERITA AMPAIKAN TERNYATA ADALAH PERTANYAAN, 6 KARAKTER PERTAMA ADALAH = "UNTOLD"                
       
       Berikut berita untuk dianalisis:
       $userText
@@ -324,7 +339,10 @@ class RunningService : Service() {
                 }
                 .addOnFailureListener { e ->
                     Log.e("BaswaraService", "OCR failed: ${e.message}")
-                    waitYa("Kesalahan karna: ${e.message.toString().take(40)}...", "Terjadi Kesalahan")
+                    waitYa(
+                        "Kesalahan karna: ${e.message.toString().take(40)}...",
+                        "Terjadi Kesalahan"
+                    )
                 }
         } catch (e: IOException) {
             Log.e("BaswaraService", "Gagal mengubah URI hasil crop menjadi Bitmap", e)
@@ -384,7 +402,11 @@ class RunningService : Service() {
             .setStyle(NotificationCompat.DecoratedCustomViewStyle())
             .build()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(nextNotifyId(), notif, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)
+            startForeground(
+                nextNotifyId(),
+                notif,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
+            )
         } else {
             startForeground(nextNotifyId(), notif)
         }
@@ -402,7 +424,8 @@ class RunningService : Service() {
         }, Handler(Looper.getMainLooper()))
 
         val dm = resources.displayMetrics
-        imageReader = ImageReader.newInstance(dm.widthPixels, dm.heightPixels, PixelFormat.RGBA_8888, 2)
+        imageReader =
+            ImageReader.newInstance(dm.widthPixels, dm.heightPixels, PixelFormat.RGBA_8888, 2)
 
         // Create VirtualDisplay ONCE and keep it
         virtualDisplay = mediaProjection?.createVirtualDisplay(
@@ -456,6 +479,7 @@ class RunningService : Service() {
             .setSmallIcon(R.drawable.logo2)
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setFullScreenIntent(tapPending, true)
+            .setTimeoutAfter(60000)
             .setContentIntent(tapPending)
             .setAutoCancel(true)
             .build()
@@ -465,7 +489,8 @@ class RunningService : Service() {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val chan = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH)
+            val chan =
+                NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH)
             chan.enableVibration(true)
             getSystemService(NotificationManager::class.java)
                 .createNotificationChannel(chan)
@@ -489,16 +514,26 @@ class RunningService : Service() {
         @Json(name = "text") val text: String
     )
 
+    class Empty
+
+    // 2) a real data class whose one field is exactly "google_search": {}
+    data class ToolRequest(
+        @Json(name = "google_search")
+        val googleSearch: Empty = Empty()
+    )
+
+    // 3) now change ContentRequest to refer to a List<ToolRequest>
+    data class ContentRequest(
+        @Json(name = "contents") val contents: List<ContentItem>,
+        @Json(name = "tools") val tools: List<ToolRequest> = listOf(ToolRequest())
+    )
+
     data class Content(
         @Json(name = "parts") val parts: List<ContentPart>
     )
 
     data class ContentItem(
         @Json(name = "parts") val parts: List<ContentPart>
-    )
-
-    data class ContentRequest(
-        @Json(name = "contents") val contents: List<ContentItem>
     )
 
     data class ContentCandidate(
@@ -523,7 +558,8 @@ class RunningService : Service() {
         }
         // Build request
         val reqObj = ContentRequest(
-            contents = listOf(ContentItem(parts = listOf(ContentPart(userPrompt))))
+            contents = listOf(ContentItem(parts = listOf(ContentPart(userPrompt)))),
+            tools = listOf(ToolRequest())
         )
         val json = moshi.adapter(ContentRequest::class.java).toJson(reqObj)
         val body = json.toRequestBody("application/json; charset=utf-8".toMediaType())
@@ -560,16 +596,29 @@ class RunningService : Service() {
                         val content = first.getJSONObject("content")
                         val parts = content.getJSONArray("parts")
 
-                        if (parts.length() > 0) {
+                        val answerText = if (parts.length() > 1) {
+                            parts.getJSONObject(1).getString("text")
+                        } else {
+                            // fallback to whatever is available
+                            parts.getJSONObject(0).getString("text")
+                        }
 
+                        if (parts.length() > 1) {
+
+                            val answerText = parts.getJSONObject(1).getString("text")
+                            answerTextKMain = answerText
+
+                            sendNotification(answerText)
+                            startActivity(cropIntent)
+
+                            callback(answerText, null)
+                        } else {
                             val answerText = parts.getJSONObject(0).getString("text")
                             answerTextKMain = answerText
                             sendNotification(answerText)
                             startActivity(cropIntent)
 
                             callback(answerText, null)
-                        } else {
-                            callback(null, Exception("No parts found in response"))
                         }
                     } else {
                         callback(null, Exception("No candidates found in response"))
@@ -581,62 +630,6 @@ class RunningService : Service() {
             }
         })
     }
-
-    fun generateGnewsManually(
-        apiKey: String,
-        query: String,
-        callback: (List<Pair<String, String>>?, Exception?) -> Unit
-    ) {
-        val encoded = URLEncoder.encode(query, "UTF-8")
-        // <-- use apikey=… not token=…
-        val url = "https://gnews.io/api/v4/search?q=$encoded&apikey=$apiKey&lang=en&max=5"
-
-        Log.d("GNews▶", "About to call: $url")
-
-        val request = Request.Builder()
-            .url(url)
-            .get()
-            .build()
-
-        OkHttpClient().newCall(request).enqueue(object : okhttp3.Callback {
-            override fun onFailure(call: okhttp3.Call, e: IOException) {
-                Log.e("GNews✖", "Network failure", e)
-                callback(null, e)
-            }
-
-            override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
-                Log.d("GNews✔", "HTTP ${response.code}")
-                val body = response.body?.string().orEmpty()
-                Log.d("GNews▶body", body)
-
-                if (!response.isSuccessful) {
-                    callback(null, Exception("HTTP ${response.code}: ${response.message}"))
-                    return
-                }
-                try {
-                    // 4) Parse JSON
-                    val body = response.body?.string().orEmpty()
-                    val root = JSONObject(body)
-                    val arr  = root.getJSONArray("articles")
-                    val list = mutableListOf<Pair<String, String>>()
-
-                    for (i in 0 until arr.length()) {
-                        val obj   = arr.getJSONObject(i)
-                        val title = obj.optString("title")
-                        val url   = obj.optString("url")
-                        list += title to url
-
-
-                    }
-                    callback(list, null)
-                } catch (e: Exception) {
-                    callback(null, e)
-                }
-            }
-        })
-    }
-
-// 3) Cara pakai:
 
 
 }
@@ -650,7 +643,7 @@ class RunningService : Service() {
 
         // 2) Construct the SerpApi Search endpoint URL
         //    engine=google is required; you can swap in any supported engine
-        val url = "https://serpapi.com/search.json?engine=google&q=$encoded&location=id&tbm=nws&safe=active&gl=id&hl=id&device=mobile&api_key=$serpAI"
+        val url = "https://serpapi.com/search.json?engine=google&q=$encoded&location=id&tbm=nws&safe=active&gl=id&hl=id&device=mobile&nfpr=0&filter=0&api_key=$serpAI"
 
         Log.d("SerpApi▶", "About to call: $url")
 
@@ -685,7 +678,7 @@ class RunningService : Service() {
                         ?.optString("google_url")
                         ?.trim()
                         .orEmpty()
-
+                    googleurl = googleUrl    // from metadata
                     // 2) Pull the first news result
                     val arr = root.optJSONArray("news_results")
                     if (arr != null && arr.length() > 0) {
@@ -697,9 +690,11 @@ class RunningService : Service() {
                         if (title.isNotBlank() && link.isNotBlank()) {
                             gnewsjdul = title
                             gnewsurl  = link
-                            googleurl = googleUrl    // from metadata
+
                         }
                     } else {
+                        gnewsjdul = ""
+                        gnewsurl  = ""
                         Log.w("SerpApi", "No news_results array or it’s empty")
                     }
 
@@ -708,6 +703,7 @@ class RunningService : Service() {
                 }
             }
         })
+
     }
 
 
