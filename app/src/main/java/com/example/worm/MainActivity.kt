@@ -251,8 +251,10 @@ class HomeFragment : Fragment(R.layout.activity_main_uji) {
             .setTitle("Petunjuk Baswara")
 
             .setMessage("""
+Mulai pemindaian dengan menekan Scan, kemudian tutup area notifikasi. Aplikasi belum bisa menutup notifikasi otomatis karena keterbatasan izin sistem.
 
-Untuk menggunakan "Scan", Tekan dulu scannya dan langsung tutup Jendela Notifikasi. Karna Aplikasi ini tidak puntya kuasa untuk langsung menutup jendela Notifikasi.
+github.com/Dan-Rekto/BaswaraRekto
+Versi 1.0.0
 
 """.trimIndent())
 
@@ -285,6 +287,7 @@ class MainActivity : AppCompatActivity() {
     private var doubleBackToExitPressedOnce = false
 
     private var doubleBackToExitPressedOnce1 = false // For DahJalan
+    private var doubleBackToExitPressedOnce2 = false // For DahJalan
     private var backPressCount = 0
     private val handlerBPC = Handler(Looper.getMainLooper())
     private val resetBackPressCount = Runnable { backPressCount = 0 }
@@ -293,11 +296,18 @@ class MainActivity : AppCompatActivity() {
     private val resetBackPress = Runnable { doubleBackToExitPressedOnce = false }
 
     private val resetBackPress1 = Runnable { doubleBackToExitPressedOnce1 = false }
+    private val resetBackPress2 = Runnable { doubleBackToExitPressedOnce1 = false }
 
     lateinit var toolbar: Toolbar
 
     private lateinit var drawer: DrawerLayout //Tambahkan variabel drawer sebagai property
-
+    private val handler1 = Handler(Looper.getMainLooper())
+    private val backHomeRunnable = Runnable {
+        val frag = if (sw) HomeFragment() else HomeFragment.DahJalan()
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.container_fragment, frag)
+            .commitAllowingStateLoss()
+    }
 
 
     private lateinit var mediaProjectionManager: MediaProjectionManager
@@ -351,7 +361,7 @@ class MainActivity : AppCompatActivity() {
         val sharedPreferences = getSharedPreferences("UserPreferences", MODE_PRIVATE)
 
         val savedName = sharedPreferences.getBoolean("user_pref", warn)
-
+        handler1.removeCallbacks(backHomeRunnable)
         warn = savedName
         responseTextOnResume = null
     }
@@ -375,6 +385,8 @@ class MainActivity : AppCompatActivity() {
         editor.putBoolean("user_pref", warn)
 
         editor.apply()
+
+        handler1.postDelayed(backHomeRunnable, 120_000)
 
     }
 
@@ -630,7 +642,7 @@ class MainActivity : AppCompatActivity() {
 
                 compoundDrawablePadding = 16
 
-                setPadding(dpToPx(5), dpToPx(24), paddingRight, paddingBottom)
+                setPadding(dpToPx(5), dpToPx(35), paddingRight, paddingBottom)
 
                 setOnClickListener {
 
@@ -754,6 +766,7 @@ class MainActivity : AppCompatActivity() {
 
                 .setIcon(R.drawable.home_svgrepo_com)
 
+
             menu.add(Menu.NONE, 1, Menu.NONE, "Log Pengecekan")
 
                 .icon = ContextCompat.getDrawable(context, android.R.drawable.ic_menu_search)
@@ -761,13 +774,6 @@ class MainActivity : AppCompatActivity() {
             menu.add(Menu.NONE, 2, Menu.NONE, "Tentang Kami")
 
                 .icon = ContextCompat.getDrawable(context, android.R.drawable.ic_menu_info_details)
-            menu.add(Menu.NONE, 4, Menu.NONE, "Setting")
-
-                .setIcon(R.drawable.gear_svgrepo_com)
-            menu.add(Menu.NONE, 5, Menu.NONE, "Tutorial")
-
-                .setIcon(R.drawable.question)
-
 
 
 
@@ -828,20 +834,6 @@ class MainActivity : AppCompatActivity() {
                         updateToolbarColorab()
 
                     }
-                    4 -> {
-                        supportFragmentManager.beginTransaction()
-
-                            .replace(R.id.container_fragment, SettingsFragment())
-
-                            .commit()
-
-                        updateToolbarColorsett()
-                        sett = false
-                    }
-                    5-> {
-
-                    }
-
                 }
 
                 drawer.closeDrawer(GravityCompat.START)
@@ -1010,60 +1002,7 @@ class MainActivity : AppCompatActivity() {
 
         when (current) {
 
-            is SettingsFragment -> {
-                if (sw) {
-                    sett = true
-                    supportFragmentManager.beginTransaction()
-
-                        .replace(R.id.container_fragment, HomeFragment())
-
-                        .commit()
-                    toolbar.setBackgroundColor(if (sw) Color.parseColor("#2b5f56") else Color.WHITE)
-
-                } else if (!sw){
-                    sett = true
-                    supportFragmentManager.beginTransaction()
-
-                        .replace(R.id.container_fragment, HomeFragment.DahJalan())
-
-                        .commit()
-                    toolbar.setBackgroundColor(if (sw) Color.parseColor("#2b5f56") else Color.WHITE)
-
-                }
-            }
-
-
-            is AboutFragment -> {
-
-                if (sw) {
-
-                    ab = true
-
-                    supportFragmentManager.beginTransaction()
-
-                        .replace(R.id.container_fragment, HomeFragment())
-
-                        .commit()
-
-                    updateToolbarColorab()
-
-                } else {
-
-                    ab = true
-
-                    supportFragmentManager.beginTransaction()
-
-                        .replace(R.id.container_fragment, HomeFragment.DahJalan())
-
-                        .commit()
-
-                    updateToolbarColorab()
-
-                }
-
-            }
-
-            is HomeFragment.DahJalan -> {
+            is DahJalan -> {
 
                 if (doubleBackToExitPressedOnce1) {
 
@@ -1075,13 +1014,10 @@ class MainActivity : AppCompatActivity() {
 
                         .apply()
 
-                    finish()
-
+                    moveTaskToBack(true)
                     return
 
                 }
-
-
 
                 doubleBackToExitPressedOnce1 = true
 
@@ -1108,8 +1044,6 @@ class MainActivity : AppCompatActivity() {
                     return
 
                 }
-
-
 
                 doubleBackToExitPressedOnce = true
 
@@ -1165,6 +1099,29 @@ class AboutFragment : Fragment(R.layout.aboutab) {
 
         super.onViewCreated(view, savedInstanceState)
 
+        requireActivity()
+            .onBackPressedDispatcher
+            .addCallback(viewLifecycleOwner, object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    if (sw) {
+                        ab = true
+                        parentFragmentManager.beginTransaction()
+                            .replace(R.id.container_fragment, HomeFragment())
+                            .commitAllowingStateLoss()
+                        (activity as? MainActivity)?.updateToolbarColor()
+                    } else {
+                        ab = true
+                        parentFragmentManager.beginTransaction()
+                            .replace(R.id.container_fragment, HomeFragment.DahJalan())
+                            .commitAllowingStateLoss()
+                        (activity as? MainActivity)?.updateToolbarColor()
+                    }
+
+                    // now disable & remove this callback so back behaves normally afterwards
+                    isEnabled = false
+                    remove()
+                }
+            })
     }
 
 }
@@ -1256,7 +1213,7 @@ class LogFragment : Fragment(R.layout.log) {
             }
 
             //buatnewsid
-            view.findViewById<TextView>(R.id.jdulnewsLOG1BL).text = gnewsjdul.take(15).trim()
+            view.findViewById<TextView>(R.id.jdulnewsLOG1BL).text = gnewsjdul.trim()
 
             val news2but = view.findViewById<Button>(R.id.newsapiLOG1BL)
             news2but.text = "${gnewsurl.take(15).trim()}..."
@@ -1331,91 +1288,7 @@ class LogFragment : Fragment(R.layout.log) {
 }
 
 
-class SettingsFragment : Fragment(R.layout.setting) {
 
-    private val PREFS_NAME      = "settings_prefs"
-    private val KEY_MODEL       = "selected_model"
-    private val KEY_API_KEY     = "api_key"
-    private var selectedModel   = "gemini-1.5"
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        val prefs = requireContext()
-            .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-
-        // --- 0) load saved values ---
-        selectedModel = prefs.getString(KEY_MODEL, selectedModel) ?: selectedModel
-        val savedApiKey = prefs.getString(KEY_API_KEY, "") ?: ""
-
-        // --- API key UI wiring ---
-        val editText = view.findViewById<EditText>(R.id.editText)
-        val button   = view.findViewById<Button>(R.id.button)
-        editText.setText(savedApiKey)
-
-        button.setOnClickListener {
-            val newKey = editText.text.toString().trim()
-            APIkeRunning = newKey
-            prefs.edit()
-                .putString(KEY_API_KEY, newKey)
-                .apply()
-            Toast.makeText(requireContext(), "API key saved", Toast.LENGTH_SHORT).show()
-            Log.d("Jancok", APIkeRunning)
-        }
-
-        // --- expandable layout wiring ---
-        val expandable     = view.findViewById<ExpandableLayout>(R.id.expandableModels)
-        val parentText     = view.findViewById<TextView>(R.id.parentText)
-        val parentSpinner  = view.findViewById<ImageView>(R.id.parentSpinner)
-
-        // toggle on header tap
-        view.findViewById<View>(R.id.parentLayout).setOnClickListener {
-            expandable.toggleLayout()
-        }
-
-        // rotate arrow on expand/collapse
-        expandable.setOnExpandListener { isExpanded ->
-            parentSpinner.rotation = if (isExpanded) 180f else 0f
-        }
-
-        // wire up each choice
-        view.findViewById<TextView>(R.id.opt15).setOnClickListener {
-            onModelSelected("gemini-1.5", parentText, expandable, prefs)
-            selectedModel   = "gemini-1.5"
-        }
-        view.findViewById<TextView>(R.id.opt20lite).setOnClickListener {
-            onModelSelected("gemini-2.0-flash-lite", parentText, expandable, prefs)
-            selectedModel   = "gemini-2.0-flash-lite"
-        }
-        view.findViewById<TextView>(R.id.opt20).setOnClickListener {
-            onModelSelected("gemini-2.0", parentText, expandable, prefs)
-            selectedModel   = "gemini-2.0"
-        }
-        view.findViewById<TextView>(R.id.opt25).setOnClickListener {
-            onModelSelected("gemini-2.5-flash", parentText, expandable, prefs)
-            selectedModel   = "gemini-2.5-flash"
-        }
-
-        // initialize header text
-        parentText.text = "Model: $selectedModel"
-    }
-
-    private fun onModelSelected(
-        model: String,
-        header: TextView,
-        expandable: ExpandableLayout,
-        prefs: SharedPreferences
-    ) {
-        ModelKeRunning = selectedModel
-        // save to prefs
-        prefs.edit()
-            .putString(KEY_MODEL, selectedModel)
-            .apply()
-
-        header.text = "Model: $selectedModel"
-        expandable.collapse()
-        Toast.makeText(requireContext(), "Selected $ModelKeRunning", Toast.LENGTH_SHORT).show()
-    }
-}
 
 
 

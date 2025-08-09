@@ -136,21 +136,28 @@
             app:layout_constraintTop_toTopOf="@id/mataluar"
             app:layout_constraintVertical_bias="0.32999998" />
 
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideline_top"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.05" />
+        <!-- 0.15 = 15% from top -->
+
+        <!-- Then modify your TextView -->
         <TextView
             android:id="@+id/judul"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="45dp"
             android:fontFamily="@font/mont"
             android:gravity="center_horizontal"
             android:text="Baswara"
             android:textColor="@color/Baswara"
             android:textSize="69dp"
             android:visibility="visible"
-            app:layout_constraintEnd_toStartOf="@+id/frameLayout"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@+id/frameLayout"
-            app:layout_constraintTop_toBottomOf="@+id/text2" />
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@id/guideline_top" />
 
 
 

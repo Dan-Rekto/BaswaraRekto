@@ -643,7 +643,7 @@ class RunningService : Service() {
 
         // 2) Construct the SerpApi Search endpoint URL
         //    engine=google is required; you can swap in any supported engine
-        val url = "https://serpapi.com/search.json?engine=google&q=$encoded&location=id&tbm=nws&safe=active&gl=id&hl=id&device=mobile&nfpr=0&filter=0&api_key=$serpAI"
+        val url = "https://serpapi.com/search.json?engine=google&q=$encoded&location=id&tbm=lcl&safe=active&gl=id&hl=id&device=mobile&nfpr=0&filter=0&api_key=$serpAI"
 
         Log.d("SerpApi▶", "About to call: $url")
 
